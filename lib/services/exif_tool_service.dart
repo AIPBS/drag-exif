@@ -268,12 +268,30 @@ class ExifToolService {
     await File(filePath).copy(tempFile);
 
     // Build ExifTool arguments: -TagName="value" for each change
-    final args = <String>[
-      ...extraArgs,
-      ...tagChanges.entries.map((e) => '-${e.key}=${e.value}'),
-      '-overwrite_original',
-      tempFile,
-    ];
+    final args = <String>[...extraArgs];
+
+    String? argFile;
+    if (Platform.isWindows) {
+      // On Windows, command-line argument encoding can mangle Unicode.
+      // Write arguments to a UTF-8 encoded argfile and load via -@.
+      argFile = '${Directory.systemTemp.path}/dragexif_args_${DateTime.now().millisecondsSinceEpoch}.txt';
+      final buffer = StringBuffer();
+      buffer.writeln('-charset');
+      buffer.writeln('UTF8');
+      for (final entry in tagChanges.entries) {
+        // Escape backslashes and double quotes for the argfile format
+        var value = entry.value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+        buffer.writeln('-${entry.key}=$value');
+      }
+      buffer.writeln('-overwrite_original');
+      buffer.writeln(tempFile);
+      File(argFile).writeAsStringSync(buffer.toString(), encoding: utf8);
+      args.addAll(['-charset', 'UTF8', '-@', argFile]);
+    } else {
+      args.addAll(tagChanges.entries.map((e) => '-${e.key}=${e.value}'));
+      args.add('-overwrite_original');
+      args.add(tempFile);
+    }
 
     final result = await Process.run(
       currentExifToolPath,
@@ -281,6 +299,11 @@ class ExifToolService {
       stdoutEncoding: utf8,
       stderrEncoding: utf8,
     );
+
+    // Clean up argfile on Windows
+    if (argFile != null) {
+      try { File(argFile).deleteSync(); } catch (_) {}
+    }
 
     if (result.exitCode != 0) {
       // Clean up temp file on failure

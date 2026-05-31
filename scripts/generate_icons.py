@@ -3,7 +3,7 @@
 # write your icon name here
 # ----------------------------
 
-icon_name = "app_icon_v0.1.1.svg"
+icon_name = "app_icon_v0.1.2.svg"
 
 # ----------------------------
 
@@ -21,6 +21,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SVG = os.path.join(BASE, 'assets', icon_name)
 WIN_DIR = os.path.join(BASE, 'windows', 'runner', 'resources')
 LIN_DIR = os.path.join(BASE, 'linux', 'runner', 'icons')
+MAC_DIR = os.path.join(BASE, 'macos', 'Runner', 'Assets.xcassets', 'AppIcon.appiconset')
 SIZES = [16, 32, 48, 64, 128, 256, 512]
 
 
@@ -56,6 +57,7 @@ def main():
     print("Generating icons...")
     os.makedirs(WIN_DIR, exist_ok=True)
     os.makedirs(LIN_DIR, exist_ok=True)
+    os.makedirs(MAC_DIR, exist_ok=True)
 
     pngs = []
     for size in SIZES:
@@ -76,6 +78,19 @@ def main():
          open(os.path.join(LIN_DIR, 'app_icon.png'), 'wb') as fdst:
         fdst.write(fsrc.read())
     print(f"  app_icon.png -> linux/")
+
+    # macOS icons
+    mac_sizes = [16, 32, 64, 128, 256, 512, 1024]
+    for size in mac_sizes:
+        src = os.path.join(WIN_DIR, f'app_icon_{size}.png') if size in SIZES else None
+        dst = os.path.join(MAC_DIR, f'app_icon_{size}.png')
+        if src and os.path.exists(src):
+            with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
+                fdst.write(fsrc.read())
+        else:
+            render(SVG, dst, size)
+        print(f"  {size}x{size} -> macos/")
+
     print("Done.")
 
 

@@ -190,11 +190,18 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   @override
   void onWindowMove() => _saveWindowState();
 
+  bool _isClosing = false;
+
   @override
   void onWindowClose() async {
+    if (_isClosing) return;
+    _isClosing = true;
     final canClose = await _handleUnsavedChangesBeforeAction();
     if (canClose) {
-      await windowManager.destroy();
+      await windowManager.setPreventClose(false);
+      await windowManager.close();
+    } else {
+      _isClosing = false;
     }
   }
 

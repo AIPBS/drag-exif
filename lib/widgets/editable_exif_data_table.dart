@@ -71,7 +71,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
           initiallyExpanded: true,
           title: Text(
             groupName,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
           ),
           subtitle: Text('${groupItems.length} tags'),
           children: [
@@ -95,20 +95,21 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
 
   List<DataColumn2> _buildColumns() {
     final columns = <DataColumn2>[];
+    const headerStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
     if (widget.showIndex) {
-      columns.add(DataColumn2(size: ColumnSize.S, label: const Text('')));
+      columns.add(const DataColumn2(size: ColumnSize.S, label: Text('', style: headerStyle)));
     }
     if (widget.showTagId) {
-      columns.add(DataColumn2(size: ColumnSize.S, label: const Text('Tag ID')));
+      columns.add(const DataColumn2(size: ColumnSize.S, label: Text('Tag ID', style: headerStyle)));
     }
     if (widget.showTagName) {
-      columns.add(DataColumn2(size: ColumnSize.M, label: const Text('Tag Name')));
+      columns.add(const DataColumn2(size: ColumnSize.M, label: Text('Tag Name', style: headerStyle)));
     }
     if (widget.showTagValue) {
-      columns.add(DataColumn2(size: ColumnSize.L, label: const Text('Value')));
+      columns.add(const DataColumn2(size: ColumnSize.L, label: Text('Value', style: headerStyle)));
     }
     // Action column (delete)
-    columns.add(const DataColumn2(size: ColumnSize.S, label: Text('')));
+    columns.add(const DataColumn2(size: ColumnSize.S, label: Text('', style: headerStyle)));
     return columns;
   }
 
@@ -132,11 +133,12 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
 
     final cells = <DataCell>[];
 
+    const cellStyle = TextStyle(fontSize: 14);
     if (widget.showIndex) {
-      cells.add(DataCell(Text('${index + 1}')));
+      cells.add(DataCell(Text('${index + 1}', style: cellStyle)));
     }
     if (widget.showTagId) {
-      cells.add(DataCell(Text(item.tagId)));
+      cells.add(DataCell(Text(item.tagId, style: cellStyle)));
     }
     if (widget.showTagName) {
       cells.add(
@@ -147,6 +149,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
             child: Text(
               item.tagName,
               overflow: TextOverflow.ellipsis,
+              style: cellStyle,
             ),
           ),
         ),
@@ -160,6 +163,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
               child: TextField(
                 controller: _editController,
                 autofocus: true,
+                style: cellStyle,
                 decoration: const InputDecoration(
                   isDense: true,
                   contentPadding: EdgeInsets.symmetric(vertical: 8),
@@ -192,7 +196,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
-                      style: TextStyle(
+                      style: cellStyle.copyWith(
                         color: isUnequal
                             ? Theme.of(context).colorScheme.error
                             : hasPending
@@ -225,7 +229,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
-                      style: TextStyle(
+                      style: cellStyle.copyWith(
                         color: isMarkedForDeletion
                             ? Theme.of(context).colorScheme.error
                             : isUnequal
@@ -261,7 +265,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.delete_outline,
-                      size: 16,
+                      size: 20,
                       color: Colors.grey,
                     ),
                   ),

@@ -53,6 +53,7 @@ class ImagePreview extends StatelessWidget {
           key: ValueKey(filePath),
           fit: BoxFit.contain,
           filterQuality: FilterQuality.medium,
+          cacheHeight: (maxHeight * MediaQuery.of(context).devicePixelRatio * 1.5).round(),
           errorBuilder: (context, error, stackTrace) {
             return _placeholder(context, Icons.broken_image, 'Cannot load image');
           },

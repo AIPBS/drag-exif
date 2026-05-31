@@ -1,6 +1,20 @@
 # Changelog
 
 All notable changes to this project are documented in this file.
+
+## 0.1.2 - 06-01-2026
+
+### Changed
+- Redesigned app icon (v0.1.2): removed background photo imagery and made "EXIF" text significantly larger and bolder for better identifiability at all sizes.
+- Increased status and action icon sizes across the UI (16 px → 20 px).
+- Increased EXIF table font sizes for improved readability.
+
+### Fixed
+- Windows window-close crash: replaced `windowManager.destroy()` with a safer `setPreventClose(false)` + `close()` sequence protected by an `_isClosing` guard.
+- Inline editing text jumping: the edit-mode `TextField` now shares the same base `TextStyle` as the read-only text, eliminating the pop-up layout shift.
+- Slow image preview on Windows: `Image.file` now decodes with `cacheHeight` capped to ~1.5× the display size, drastically reducing load time for large photos.
+- Unicode tag editing on Windows: tag values are now written via a UTF-8 encoded ExifTool argfile (`-@ file`) instead of direct command-line arguments, preventing character mangling.
+
 ## 0.1.1 - 05-27-2026
 
 ### Added
