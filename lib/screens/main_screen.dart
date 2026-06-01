@@ -25,6 +25,7 @@ import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
@@ -127,11 +128,22 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     super.dispose();
   }
 
-  void _handleSave() {
+  
+  Future<void> _handleSave() async {
+    if (kDebugMode) {
+      log('User pressed Ctrl+S', name: 'dragexif.user');
+    }
     // If the user is mid-edit in the table, finish that edit first
     _tableKey.currentState?.finishEditing();
     if (_pendingEdits.isNotEmpty) {
-      _saveChanges();
+      if (kDebugMode) {
+        log('Saving ${_pendingEdits.length} pending edits...', name: 'dragexif.user');
+      }
+      await _saveChanges();
+    } else {
+      if (kDebugMode) {
+        log('Ctrl+S: no pending edits to save', name: 'dragexif.user');
+      }
     }
   }
 
@@ -218,7 +230,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // ──────────────────────────────────────────────────────────
 
   Future<void> _onSelectFile(int index, {bool ctrl = false, bool shift = false}) async {
-    final stopwatch = Stopwatch()..start();
+    if (kDebugMode) {
+      log('User clicked file: ${_allFiles[index].fileName} (#$index)', name: 'dragexif.user');
+    }
+    final stopwatch = kDebugMode ? (Stopwatch()..start()) : null;
     if (_pendingEdits.isNotEmpty) {
       final action = await UnsavedChangesDialog.show(
         context,
@@ -262,15 +277,31 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     });
 
     _rebuildMergedView();
-    stopwatch.stop();
-    log('Selected file #$index, rebuilt EXIF view in ${stopwatch.elapsedMilliseconds}ms',
-        name: 'dragexif.select');
+    final sw = stopwatch;
+    if (sw != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        sw.stop();
+        if (sw.elapsedMilliseconds > 16) {
+          log('Slow frame after file select: ${sw.elapsedMilliseconds}ms',
+              name: 'dragexif.perf');
+        }
+      });
+    }
   }
 
   void _rebuildMergedView() {
-    final stopwatch = Stopwatch()..start();
+    final stopwatch = kDebugMode ? (Stopwatch()..start()) : null;
     if (_selectedIndices.isEmpty) {
       setState(() => _mergedItems = {});
+      if (stopwatch != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          stopwatch.stop();
+          if (stopwatch.elapsedMilliseconds > 16) {
+            log('Slow frame on empty view: ${stopwatch.elapsedMilliseconds}ms',
+                name: 'dragexif.perf');
+          }
+        });
+      }
       return;
     }
 
@@ -285,9 +316,16 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     setState(() {
       _mergedItems = selectedTags.isEmpty ? {} : MergedTagItem.mergeFiles(selectedTags);
     });
-    stopwatch.stop();
-    log('Rebuilt merged EXIF view: ${_mergedItems.length} groups, ${stopwatch.elapsedMilliseconds}ms',
-        name: 'dragexif.merge');
+    final sw = stopwatch;
+    if (sw != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        sw.stop();
+        if (sw.elapsedMilliseconds > 16) {
+          log('Slow frame on EXIF rebuild: ${sw.elapsedMilliseconds}ms',
+              name: 'dragexif.perf');
+        }
+      });
+    }
   }
 
   // ──────────────────────────────────────────────────────────
@@ -530,6 +568,15 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         _isLoading = false;
       });
 
+      if (kDebugMode) {
+        log('Save completed successfully', name: 'dragexif.user');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Changes saved')),
+        );
+      }
+
       // Reload EXIF for affected files
       final args = _settings.exifToolArguments.isNotEmpty
           ? _settings.exifToolArguments.split(' ')
@@ -540,6 +587,14 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _rebuildMergedView();
 
     } catch (e) {
+      if (kDebugMode) {
+        log('SAVE FAILED: $e', name: 'dragexif.user');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
+      }
       setState(() => _isLoading = false);
     }
   }

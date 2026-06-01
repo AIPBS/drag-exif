@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import 'dart:developer';
 
 import 'package:data_table_2/data_table_2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -320,7 +321,9 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
   }
 
   void _startEdit(MergedTagItem item, String groupName, int index) {
-    log('Started editing tag: ${item.tagGroup}:${item.tagName}', name: 'dragexif.edit');
+    if (kDebugMode) {
+      log('User clicked field to edit: ${item.tagGroup}:${item.tagName}', name: 'dragexif.user');
+    }
     setState(() {
       _editingGroup = groupName;
       _editingIndex = index;
