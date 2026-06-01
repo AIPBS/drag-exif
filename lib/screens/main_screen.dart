@@ -726,11 +726,223 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Build
   // ──────────────────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildBody(BuildContext context) {
     final hasChanges = _pendingEdits.isNotEmpty;
     final selectedCount = _selectedIndices.length;
 
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _dragging = true),
+      onDragExited: (_) => setState(() => _dragging = false),
+      onDragDone: (detail) async {
+        setState(() => _dragging = false);
+        final files = <String>[];
+        for (final file in detail.files) {
+          final path = file.path;
+          if (path.isNotEmpty) {
+            final stat = FileStat.statSync(path);
+            if (stat.type != FileSystemEntityType.directory &&
+                Constants.isSupportedImage(path)) {
+              files.add(path);
+            }
+          }
+        }
+        if (files.isNotEmpty) {
+          await _loadFiles(files);
+        }
+      },
+      child: Container(
+        color: _dragging
+            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+            : null,
+        child: Row(
+          children: [
+            // ── Left: File list panel ──
+            SizedBox(
+              width: _leftPanelWidth,
+              child: FileListPanel(
+                files: _allFiles,
+                selectedIndices: _selectedIndices,
+                lastClickedIndex: _lastClickedIndex,
+                onSelect: _onSelectFile,
+                onRemove: _removeFile,
+                onRename: _renameFile,
+              ),
+            ),
+
+            // Draggable splitter
+            MouseRegion(
+              cursor: SystemMouseCursors.resizeLeftRight,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragUpdate: (details) {
+                  setState(() {
+                    _leftPanelWidth += details.delta.dx;
+                    _leftPanelWidth = _leftPanelWidth.clamp(150.0, 500.0);
+                  });
+                },
+                child: SizedBox(
+                  width: 8,
+                  child: Center(
+                    child: VerticalDivider(
+                      width: 1,
+                      color: Theme.of(context).dividerColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Right: Main content ──
+            Expanded(
+              child: Column(
+                children: [
+                  // Unsaved changes banner
+                  if (hasChanges)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: Theme.of(context).colorScheme.onErrorContainer,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Unsaved changes (${_pendingEdits.length} ${_pendingEdits.length == 1 ? 'field' : 'fields'})',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _cancelChanges,
+                            child: const Text('Discard'),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _saveChanges,
+                            child: const Text('Save'),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Main content area
+                  Expanded(
+                    child: _error.isNotEmpty && _allFiles.isEmpty
+                        ? ErrorDisplay(error: _error, details: _errorDetails)
+                        : _allFiles.isEmpty && !_isLoading
+                            ? const Center(child: Text('Drop image files or click "Open files…"'))
+                            : _isLoading && _mergedItems.isEmpty
+                                ? const Center(child: CircularProgressIndicator())
+                                : selectedCount == 0
+                                    ? const Center(child: Text('Select a file to view EXIF data'))
+                                    : _displayItems.isEmpty
+                                        ? const Center(child: Text('No EXIF data for selected files'))
+                                        : EditableExifDataTable(
+                                            key: _tableKey,
+                                            groupedItems: _displayItems,
+                                            showIndex: _settings.showColumnIndex,
+                                            showTagId: _settings.showColumnTagId,
+                                            showTagName: _settings.showColumnTagName,
+                                            showTagValue: _settings.showColumnTagValue,
+                                            onEdit: _onEdit,
+                                          ),
+                  ),
+
+                  // Footer
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      border: Border(
+                        top: BorderSide(color: Theme.of(context).dividerColor),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              FilledButton.icon(
+                                onPressed: _pickFiles,
+                                icon: const Icon(Icons.folder_open, size: 18),
+                                label: const Text('Open files…'),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: _displayItems.isEmpty ? null : _copySelected,
+                                icon: const Icon(Icons.copy, size: 18),
+                                label: const Text('Copy'),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: _selectedIndices.isEmpty ? null : _showAddTagDialog,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Add tag'),
+                              ),
+                              const SizedBox(width: 8),
+                              ExportMenu(
+                                items: _exportItems,
+                                defaultFileName: selectedCount > 0
+                                    ? '${_allFiles[_selectedIndices.first].fileName.split('.').first}_exif'
+                                    : null,
+                              ),
+                              const SizedBox(width: 24),
+                              PopupMenuButton<String>(
+                                tooltip: 'Menu',
+                                onSelected: (value) async {
+                                  switch (value) {
+                                    case 'settings':
+                                      await _showSettings();
+                                    case 'about':
+                                      await _showAbout();
+                                    case 'exit':
+                                      final canClose = await _handleUnsavedChangesBeforeAction();
+                                      if (canClose) await windowManager.close();
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(value: 'settings', child: Text('Settings…')),
+                                  const PopupMenuItem(value: 'about', child: Text('About…')),
+                                  const PopupMenuItem(value: 'exit', child: Text('Exit')),
+                                ],
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text('Menu'),
+                                      SizedBox(width: 4),
+                                      Icon(Icons.arrow_drop_down, size: 18),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
         SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveIntent(),
@@ -750,220 +962,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         child: Focus(
           autofocus: true,
           child: Scaffold(
-            body: DropTarget(
-        onDragEntered: (_) => setState(() => _dragging = true),
-        onDragExited: (_) => setState(() => _dragging = false),
-        onDragDone: (detail) async {
-          setState(() => _dragging = false);
-          final files = <String>[];
-          for (final file in detail.files) {
-            final path = file.path;
-            if (path.isNotEmpty) {
-              final stat = FileStat.statSync(path);
-              if (stat.type != FileSystemEntityType.directory &&
-                  Constants.isSupportedImage(path)) {
-                files.add(path);
-              }
-            }
-          }
-          if (files.isNotEmpty) {
-            await _loadFiles(files);
-          }
-        },
-        child: Container(
-          color: _dragging
-              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
-              : null,
-          child: Row(
-            children: [
-              // ── Left: File list panel ──
-              SizedBox(
-                width: _leftPanelWidth,
-                child: FileListPanel(
-                  files: _allFiles,
-                  selectedIndices: _selectedIndices,
-                  lastClickedIndex: _lastClickedIndex,
-                  onSelect: _onSelectFile,
-                  onRemove: _removeFile,
-                  onRename: _renameFile,
-                ),
-              ),
-
-              // Draggable splitter
-              MouseRegion(
-                cursor: SystemMouseCursors.resizeLeftRight,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onHorizontalDragUpdate: (details) {
-                    setState(() {
-                      _leftPanelWidth += details.delta.dx;
-                      _leftPanelWidth = _leftPanelWidth.clamp(150.0, 500.0);
-                    });
-                  },
-                  child: SizedBox(
-                    width: 8,
-                    child: Center(
-                      child: VerticalDivider(
-                        width: 1,
-                        color: Theme.of(context).dividerColor,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Right: Main content ──
-              Expanded(
-                child: Column(
-                  children: [
-                    // Unsaved changes banner
-                    if (hasChanges)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        color: Theme.of(context).colorScheme.errorContainer,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.warning_amber,
-                              color: Theme.of(context).colorScheme.onErrorContainer,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Unsaved changes (${_pendingEdits.length} ${_pendingEdits.length == 1 ? 'field' : 'fields'})',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onErrorContainer,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: _cancelChanges,
-                              child: const Text('Discard'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: _saveChanges,
-                              child: const Text('Save'),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // Main content area
-                    Expanded(
-                      child: _error.isNotEmpty && _allFiles.isEmpty
-                          ? ErrorDisplay(error: _error, details: _errorDetails)
-                          : _allFiles.isEmpty && !_isLoading
-                              ? const Center(child: Text('Drop image files or click "Open files…"'))
-                              : _isLoading && _mergedItems.isEmpty
-                                  ? const Center(child: CircularProgressIndicator())
-                                  : selectedCount == 0
-                                      ? const Center(child: Text('Select a file to view EXIF data'))
-                                      : _displayItems.isEmpty
-                                          ? const Center(child: Text('No EXIF data for selected files'))
-                                          : EditableExifDataTable(
-                                              key: _tableKey,
-                                              groupedItems: _displayItems,
-                                              showIndex: _settings.showColumnIndex,
-                                              showTagId: _settings.showColumnTagId,
-                                              showTagName: _settings.showColumnTagName,
-                                              showTagValue: _settings.showColumnTagValue,
-                                              onEdit: _onEdit,
-                                            ),
-                    ),
-
-                    // Footer
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                FilledButton.icon(
-                                  onPressed: _pickFiles,
-                                  icon: const Icon(Icons.folder_open, size: 18),
-                                  label: const Text('Open files…'),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton.icon(
-                                  onPressed: _displayItems.isEmpty ? null : _copySelected,
-                                  icon: const Icon(Icons.copy, size: 18),
-                                  label: const Text('Copy'),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton.icon(
-                                  onPressed: _selectedIndices.isEmpty ? null : _showAddTagDialog,
-                                  icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('Add tag'),
-                                ),
-                                const SizedBox(width: 8),
-                                ExportMenu(
-                                  items: _exportItems,
-                                  defaultFileName: selectedCount > 0
-                                      ? '${_allFiles[_selectedIndices.first].fileName.split('.').first}_exif'
-                                      : null,
-                                ),
-                                const SizedBox(width: 24),
-                                PopupMenuButton<String>(
-                                  tooltip: 'Menu',
-                                  onSelected: (value) async {
-                                    switch (value) {
-                                      case 'settings':
-                                        await _showSettings();
-                                      case 'about':
-                                        await _showAbout();
-                                      case 'exit':
-                                        final canClose = await _handleUnsavedChangesBeforeAction();
-                                        if (canClose) await windowManager.close();
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(value: 'settings', child: Text('Settings…')),
-                                    const PopupMenuDivider(),
-                                    const PopupMenuItem(value: 'about', child: Text('About…')),
-                                    const PopupMenuDivider(),
-                                    const PopupMenuItem(value: 'exit', child: Text('Exit')),
-                                  ],
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 12),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('Menu'),
-                                        SizedBox(width: 4),
-                                        Icon(Icons.arrow_drop_down, size: 18),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            body: _buildBody(context),
           ),
         ),
       ),
-      ),
-      ),
-      )
     );
   }
 }
