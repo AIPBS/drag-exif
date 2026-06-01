@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/exif_tag_item.dart' show MergedTagItem;
+import '../utils/constants.dart';
 
 class EditableExifDataTable extends StatefulWidget {
   final Map<String, List<MergedTagItem>> groupedItems;
@@ -113,11 +114,8 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
     return columns;
   }
 
-  /// Groups that contain read-only file-system derived tags.
-  static const _readOnlyGroups = {'File', 'ICC_Profile'};
-
   bool _isReadOnly(MergedTagItem item) =>
-      _readOnlyGroups.contains(item.tagGroup);
+      Constants.isReadOnlyExifTag(item.tagGroup, item.tagName);
 
   void _showReadOnlyNotice(MergedTagItem item) {
     // read-only notice removed per user request
@@ -160,21 +158,30 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
         cells.add(
           DataCell(
             SizedBox.expand(
-              child: TextField(
-                controller: _editController,
-                autofocus: true,
-                style: cellStyle,
-                decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  border: InputBorder.none,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Transform.translate(
+                  offset: const Offset(0, -1),
+                  child: TextField(
+                    controller: _editController,
+                    autofocus: true,
+                    style: cellStyle.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (value) {
+                      _finishEdit(item, value);
+                    },
+                    onTapOutside: (_) {
+                      _finishEdit(item, _editController.text);
+                    },
+                  ),
                 ),
-                onSubmitted: (value) {
-                  _finishEdit(item, value);
-                },
-                onTapOutside: (_) {
-                  _finishEdit(item, _editController.text);
-                },
               ),
             ),
           ),
@@ -184,13 +191,13 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
           DataCell(
             SizedBox.expand(
               child: InkWell(
+                mouseCursor: SystemMouseCursors.forbidden,
                 onTap: () => _showReadOnlyNotice(item),
                 onDoubleTap: () => _showValueDialog(item),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Tooltip(
-                    message: displayValue,
-                    waitDuration: const Duration(milliseconds: 300),
+                    message: 'Cannot be edited',
                     child: Text(
                       displayValue,
                       softWrap: true,

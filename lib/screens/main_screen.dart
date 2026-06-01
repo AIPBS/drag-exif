@@ -617,6 +617,20 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
 
     // Normalize XMP sub-groups for display (XMP-dc, XMP-xmp, etc. → XMP)
     final displayGroup = result.group.startsWith('XMP-') ? 'XMP' : result.group;
+
+    // Block adding tags to read-only groups / tags
+    if (Constants.isReadOnlyExifTag(displayGroup, result.tagName)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cannot add read-only tag: ${result.tagName} ($displayGroup)'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     final key = '$displayGroup||${result.tagName}';
     _undoStack.add(_UndoEntry(
       key: key,

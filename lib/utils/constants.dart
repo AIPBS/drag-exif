@@ -35,6 +35,24 @@ class Constants {
   static const String originalLicense = 'GNU General Public License v3.0 (GPLv3)';
   static const String thisProjectLicense = 'GNU General Public License v3.0 (GPLv3)';
 
+  // ── Read-only EXIF groups / tags ──
+  static const Set<String> readOnlyGroups = {
+    'File',
+    'ICC_Profile',
+    'Composite',
+  };
+
+  static const Set<String> readOnlyTagNames = {
+    'ImageSize',
+    'Megapixels',
+    'FileType',
+    'FileTypeExtension',
+    'MIMEType',
+  };
+
+  static bool isReadOnlyExifTag(String group, String tagName) =>
+      readOnlyGroups.contains(group) || readOnlyTagNames.contains(tagName);
+
   // ── Image format support ──
   static const List<String> supportedImageExtensions = [
     // Common raster
