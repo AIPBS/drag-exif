@@ -34,4 +34,76 @@ class Constants {
   static const String originalCopyright = 'Copyright © 2023-2025, Dương Diệu Pháp';
   static const String originalLicense = 'GNU General Public License v3.0 (GPLv3)';
   static const String thisProjectLicense = 'GNU General Public License v3.0 (GPLv3)';
+
+  // ── Image format support ──
+  static const List<String> supportedImageExtensions = [
+    // Common raster
+    'jpg', 'jpeg', 'png', 'tiff', 'tif', 'gif', 'bmp', 'webp', 'ico',
+    'heic', 'heif', 'avif', 'jxl',
+    // RAW — Canon
+    'cr2', 'cr3', 'crw',
+    // RAW — Nikon
+    'nef', 'nrw',
+    // RAW — Sony
+    'arw', 'srf', 'sr2',
+    // RAW — Adobe / generic
+    'dng', 'raw',
+    // RAW — Olympus
+    'orf',
+    // RAW — Panasonic / Leica
+    'rw2', 'rwl',
+    // RAW — Fujifilm
+    'raf',
+    // RAW — Pentax
+    'pef', 'ptx',
+    // RAW — Sigma
+    'x3f',
+    // RAW — Minolta / Konica
+    'mrw',
+    // RAW — Kodak
+    'kdc', 'k25', 'dcr',
+    // RAW — Mamiya
+    'mos',
+    // RAW — Phase One
+    'iiq',
+    // RAW — Hasselblad
+    '3fr',
+    // RAW — Epson
+    'erf',
+    // RAW — Mamiya / Leaf
+    'mef',
+    // RAW — Samsung
+    'srw',
+    // RAW — Other
+    'bay', 'cap', 'cin', 'cs1', 'drf', 'fff', 'iq', 'mdc', 'obm', 'qtk',
+    // Photoshop / layered
+    'psd', 'psb',
+    // JPEG 2000
+    'jp2', 'j2k', 'jpf', 'jpx', 'jpm', 'mj2',
+    // Other common formats
+    'tga', 'pcx', 'pnm', 'pbm', 'pgm', 'ppm', 'pfm', 'xbm', 'xpm', 'wbmp',
+    // HDR / EXR
+    'exr', 'hdr', 'pic',
+    // SVG (rarely has EXIF, but possible)
+    'svg', 'svgz',
+  ];
+
+  /// Formats that Flutter's [Image.file] can actually decode for preview.
+  static const List<String> previewableImageExtensions = [
+    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',
+    'tiff', 'tif', 'ico', 'wbmp', 'heic', 'heif',
+  ];
+
+  /// Images larger than this will not be auto-previewed (user must click).
+  static const int maxAutoPreviewSizeBytes = 10 * 1024 * 1024; // 10 MB
+
+  static bool isSupportedImage(String path) {
+    final ext = path.toLowerCase().split('.').lastOrNull;
+    return ext != null && supportedImageExtensions.contains(ext);
+  }
+
+  static bool isPreviewableImage(String path) {
+    final ext = path.toLowerCase().split('.').lastOrNull;
+    return ext != null && previewableImageExtensions.contains(ext);
+  }
 }

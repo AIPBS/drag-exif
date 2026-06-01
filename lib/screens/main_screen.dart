@@ -584,11 +584,11 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // ──────────────────────────────────────────────────────────
 
   Future<void> _pickFiles() async {
-    const typeGroup = XTypeGroup(
+    final typeGroup = XTypeGroup(
       label: 'Images',
-      extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'raw', 'cr2', 'nef', 'arw', 'dng', 'heic', 'webp', 'gif', 'bmp'],
+      extensions: Constants.supportedImageExtensions,
     );
-    final files = await openFiles(acceptedTypeGroups: [typeGroup, const XTypeGroup(label: 'All files')]);
+    final files = await openFiles(acceptedTypeGroups: [typeGroup]);
     if (files.isNotEmpty) {
       await _loadFiles(files.map((f) => f.path).toList());
     }
@@ -723,7 +723,8 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
             final path = file.path;
             if (path.isNotEmpty) {
               final stat = FileStat.statSync(path);
-              if (stat.type != FileSystemEntityType.directory) {
+              if (stat.type != FileSystemEntityType.directory &&
+                  Constants.isSupportedImage(path)) {
                 files.add(path);
               }
             }

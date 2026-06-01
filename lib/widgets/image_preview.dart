@@ -22,7 +22,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-class ImagePreview extends StatelessWidget {
+import '../utils/constants.dart';
+
+class ImagePreview extends StatefulWidget {
   final String? filePath;
   final double maxHeight;
 
@@ -33,27 +35,109 @@ class ImagePreview extends StatelessWidget {
   });
 
   @override
+  State<ImagePreview> createState() => _ImagePreviewState();
+}
+
+class _ImagePreviewState extends State<ImagePreview> {
+  bool _showImage = false;
+  int _fileSize = 0;
+  bool _isPreviewable = false;
+  bool _exists = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _evaluateFile();
+  }
+
+  @override
+  void didUpdateWidget(covariant ImagePreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.filePath != widget.filePath) {
+      _evaluateFile();
+    }
+  }
+
+  void _evaluateFile() {
+    final path = widget.filePath;
+    if (path == null || path.isEmpty) {
+      _exists = false;
+      _isPreviewable = false;
+      _fileSize = 0;
+      _showImage = false;
+      return;
+    }
+
+    final file = File(path);
+    _exists = file.existsSync();
+    _isPreviewable = Constants.isPreviewableImage(path);
+
+    if (_exists) {
+      try {
+        _fileSize = file.lengthSync();
+      } catch (_) {
+        _fileSize = 0;
+      }
+    } else {
+      _fileSize = 0;
+    }
+
+    // Auto-show only if previewable and not too large
+    _showImage = _exists && _isPreviewable && _fileSize <= Constants.maxAutoPreviewSizeBytes;
+
+    // Ensure setState runs after the frame if called during build
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (filePath == null || filePath!.isEmpty) {
+    if (widget.filePath == null || widget.filePath!.isEmpty) {
       return _placeholder(context, Icons.image, 'No preview');
     }
 
-    final file = File(filePath!);
-    if (!file.existsSync()) {
+    if (!_exists) {
       return _placeholder(context, Icons.broken_image, 'File not found');
     }
 
+    if (!_isPreviewable) {
+      return _placeholder(
+        context,
+        Icons.image_not_supported,
+        'Preview not available',
+        subtitle: 'Format not supported by Flutter preview',
+      );
+    }
+
+    if (!_showImage) {
+      return _clickablePlaceholder(
+        context,
+        Icons.photo_size_select_large,
+        'Image too large',
+        subtitle:
+            '${_formatBytes(_fileSize)} — click to preview',
+        onTap: () => setState(() => _showImage = true),
+      );
+    }
+
     return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
+      constraints: BoxConstraints(maxHeight: widget.maxHeight),
       padding: const EdgeInsets.all(8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
         child: Image.file(
-          file,
-          key: ValueKey(filePath),
+          File(widget.filePath!),
+          key: ValueKey(widget.filePath),
           fit: BoxFit.contain,
           filterQuality: FilterQuality.medium,
-          cacheHeight: (maxHeight * MediaQuery.of(context).devicePixelRatio * 1.5).round(),
+          cacheHeight: (widget.maxHeight * MediaQuery.of(context).devicePixelRatio * 1.5).round(),
           errorBuilder: (context, error, stackTrace) {
             return _placeholder(context, Icons.broken_image, 'Cannot load image');
           },
@@ -62,9 +146,14 @@ class ImagePreview extends StatelessWidget {
     );
   }
 
-  Widget _placeholder(BuildContext context, IconData icon, String label) {
+  Widget _placeholder(
+    BuildContext context,
+    IconData icon,
+    String label, {
+    String? subtitle,
+  }) {
     return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
+      constraints: BoxConstraints(maxHeight: widget.maxHeight),
       padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -78,7 +167,67 @@ class ImagePreview extends StatelessWidget {
               fontSize: 12,
             ),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _clickablePlaceholder(
+    BuildContext context,
+    IconData icon,
+    String label, {
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: widget.maxHeight),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.outline,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap to load',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
