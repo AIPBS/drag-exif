@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/loaded_file.dart';
+import '../utils/constants.dart';
 import 'image_preview.dart';
 
 class FileListPanel extends StatefulWidget {
@@ -249,7 +250,7 @@ class _FileListPanelState extends State<FileListPanel> {
         ),
 
         // Preview panel
-        if (singleSelectedPath != null)
+        if (Constants.kEnableImagePreview && singleSelectedPath != null)
           Container(
             decoration: BoxDecoration(
               border: Border(

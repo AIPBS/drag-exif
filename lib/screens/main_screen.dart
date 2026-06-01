@@ -20,6 +20,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
@@ -57,6 +58,14 @@ class _UndoEntry {
   _UndoEntry({required this.key, this.previousValue, this.wasNewTag = false});
 }
 
+class SaveIntent extends Intent {
+  const SaveIntent();
+}
+
+class UndoIntent extends Intent {
+  const UndoIntent();
+}
+
 class _MainScreenState extends State<MainScreen> with WindowListener {
   final _exifTool = ExifToolService();
   final _settings = SettingsService();
@@ -86,13 +95,14 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   bool _dragging = false;
   double _leftPanelWidth = 260;
 
+  final _tableKey = GlobalKey<EditableExifDataTableState>();
+
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
     _initWindow();
     _checkExifToolOnStartup();
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
 
   Future<void> _checkExifToolOnStartup() async {
@@ -112,30 +122,17 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     windowManager.removeListener(this);
     _exifTool.dispose();
     super.dispose();
   }
 
-  bool _handleKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return false;
-    final isCtrl = HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed;
-
-    if (event.logicalKey == LogicalKeyboardKey.keyS && isCtrl) {
-      if (_pendingEdits.isNotEmpty) {
-        _saveChanges();
-      }
-      return true;
+  void _handleSave() {
+    // If the user is mid-edit in the table, finish that edit first
+    _tableKey.currentState?.finishEditing();
+    if (_pendingEdits.isNotEmpty) {
+      _saveChanges();
     }
-
-    if (event.logicalKey == LogicalKeyboardKey.keyZ && isCtrl) {
-      _undo();
-      return true;
-    }
-
-    return false;
   }
 
   MergedTagItem? _findMergedTagItem(String key) {
@@ -221,6 +218,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // ──────────────────────────────────────────────────────────
 
   Future<void> _onSelectFile(int index, {bool ctrl = false, bool shift = false}) async {
+    final stopwatch = Stopwatch()..start();
     if (_pendingEdits.isNotEmpty) {
       final action = await UnsavedChangesDialog.show(
         context,
@@ -264,9 +262,13 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     });
 
     _rebuildMergedView();
+    stopwatch.stop();
+    log('Selected file #$index, rebuilt EXIF view in ${stopwatch.elapsedMilliseconds}ms',
+        name: 'dragexif.select');
   }
 
   void _rebuildMergedView() {
+    final stopwatch = Stopwatch()..start();
     if (_selectedIndices.isEmpty) {
       setState(() => _mergedItems = {});
       return;
@@ -283,6 +285,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     setState(() {
       _mergedItems = selectedTags.isEmpty ? {} : MergedTagItem.mergeFiles(selectedTags);
     });
+    stopwatch.stop();
+    log('Rebuilt merged EXIF view: ${_mergedItems.length} groups, ${stopwatch.elapsedMilliseconds}ms',
+        name: 'dragexif.merge');
   }
 
   // ──────────────────────────────────────────────────────────
@@ -726,8 +731,26 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     final hasChanges = _pendingEdits.isNotEmpty;
     final selectedCount = _selectedIndices.length;
 
-    return Scaffold(
-      body: DropTarget(
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveIntent(),
+        SingleActivator(LogicalKeyboardKey.keyS, meta: true): SaveIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, control: true): UndoIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, meta: true): UndoIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          SaveIntent: CallbackAction<SaveIntent>(
+            onInvoke: (_) => _handleSave(),
+          ),
+          UndoIntent: CallbackAction<UndoIntent>(
+            onInvoke: (_) => _undo(),
+          ),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            body: DropTarget(
         onDragEntered: (_) => setState(() => _dragging = true),
         onDragExited: (_) => setState(() => _dragging = false),
         onDragDone: (detail) async {
@@ -842,6 +865,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                       : _displayItems.isEmpty
                                           ? const Center(child: Text('No EXIF data for selected files'))
                                           : EditableExifDataTable(
+                                              key: _tableKey,
                                               groupedItems: _displayItems,
                                               showIndex: _settings.showColumnIndex,
                                               showTagId: _settings.showColumnTagId,
@@ -937,6 +961,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
           ),
         ),
       ),
+      ),
+      ),
+      )
     );
   }
 }

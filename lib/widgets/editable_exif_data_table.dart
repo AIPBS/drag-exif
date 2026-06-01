@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import 'dart:developer';
+
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -44,12 +46,13 @@ class EditableExifDataTable extends StatefulWidget {
   });
 
   @override
-  State<EditableExifDataTable> createState() => _EditableExifDataTableState();
+  State<EditableExifDataTable> createState() => EditableExifDataTableState();
 }
 
-class _EditableExifDataTableState extends State<EditableExifDataTable> {
+class EditableExifDataTableState extends State<EditableExifDataTable> {
   int? _editingIndex;
   String? _editingGroup;
+  MergedTagItem? _editingItem;
   final _editController = TextEditingController();
 
   @override
@@ -317,17 +320,27 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
   }
 
   void _startEdit(MergedTagItem item, String groupName, int index) {
+    log('Started editing tag: ${item.tagGroup}:${item.tagName}', name: 'dragexif.edit');
     setState(() {
       _editingGroup = groupName;
       _editingIndex = index;
+      _editingItem = item;
       _editController.text = item.isUnequal ? '' : item.currentValue;
     });
+  }
+
+  /// Finish the current inline edit and commit the value.
+  void finishEditing() {
+    if (_editingItem != null) {
+      _finishEdit(_editingItem!, _editController.text);
+    }
   }
 
   void _finishEdit(MergedTagItem item, String value) {
     setState(() {
       _editingGroup = null;
       _editingIndex = null;
+      _editingItem = null;
     });
     // Only register an edit if the value actually changed
     if (value != item.currentValue) {

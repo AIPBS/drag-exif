@@ -43,6 +43,7 @@ class _ImagePreviewState extends State<ImagePreview> {
   int _fileSize = 0;
   bool _isPreviewable = false;
   bool _exists = false;
+  bool _evaluating = true;
 
   @override
   void initState() {
@@ -58,37 +59,49 @@ class _ImagePreviewState extends State<ImagePreview> {
     }
   }
 
-  void _evaluateFile() {
+  Future<void> _evaluateFile() async {
     final path = widget.filePath;
     if (path == null || path.isEmpty) {
-      _exists = false;
-      _isPreviewable = false;
-      _fileSize = 0;
-      _showImage = false;
+      if (mounted) {
+        setState(() {
+          _exists = false;
+          _isPreviewable = false;
+          _fileSize = 0;
+          _showImage = false;
+          _evaluating = false;
+        });
+      }
       return;
     }
 
-    final file = File(path);
-    _exists = file.existsSync();
-    _isPreviewable = Constants.isPreviewableImage(path);
+    setState(() => _evaluating = true);
 
-    if (_exists) {
-      try {
-        _fileSize = file.lengthSync();
-      } catch (_) {
-        _fileSize = 0;
+    bool exists = false;
+    int size = 0;
+    try {
+      final file = File(path);
+      exists = await file.exists();
+      if (exists) {
+        size = await file.length();
       }
-    } else {
-      _fileSize = 0;
+    } catch (_) {
+      exists = false;
+      size = 0;
     }
 
-    // Auto-show only if previewable and not too large
-    _showImage = _exists && _isPreviewable && _fileSize <= Constants.maxAutoPreviewSizeBytes;
+    if (!mounted) return;
+    // Stale result guard – path may have changed while we were async
+    if (widget.filePath != path) return;
 
-    // Ensure setState runs after the frame if called during build
-    if (mounted) {
-      setState(() {});
-    }
+    final isPreviewable = Constants.isPreviewableImage(path);
+
+    setState(() {
+      _exists = exists;
+      _isPreviewable = isPreviewable;
+      _fileSize = size;
+      _showImage = exists && isPreviewable && size <= Constants.maxAutoPreviewSizeBytes;
+      _evaluating = false;
+    });
   }
 
   String _formatBytes(int bytes) {
@@ -101,6 +114,10 @@ class _ImagePreviewState extends State<ImagePreview> {
   Widget build(BuildContext context) {
     if (widget.filePath == null || widget.filePath!.isEmpty) {
       return _placeholder(context, Icons.image, 'No preview');
+    }
+
+    if (_evaluating) {
+      return _placeholder(context, Icons.image, 'Loading preview...');
     }
 
     if (!_exists) {

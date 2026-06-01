@@ -124,4 +124,7 @@ class Constants {
     final ext = path.toLowerCase().split('.').lastOrNull;
     return ext != null && previewableImageExtensions.contains(ext);
   }
+
+  /// Toggle to disable image preview for performance testing.
+  static const bool kEnableImagePreview = true;
 }
