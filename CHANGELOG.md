@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.3 - 06-02-2026
+
+### Added
+- Format-specific read-only tag definitions: PNG, JFIF, GIF, BMP, TIFF, RIFF, WebP, HEIC/HEIF.
+- `const Set<String>` lookup for read-only tags: O(1) `Set.contains()` replaces O(n) `List.contains()`.
+- `_isSwitchingFile` perceived-performance guard: clicking a file now updates the highlight instantly while the heavy EXIF table rebuilds in a deferred frame.
+- `_rebuildGeneration` stale-guard: rapid successive clicks discard obsolete deferred rebuilds.
+- Memoized `_displayItems`: cached field prevents `EditableExifDataTable` from rebuilding on every frame.
+
+### Changed
+- Image preview completely rewritten:
+  - Fixed `SizedBox` bounds (220 px) — no more layout jumps between placeholder and image.
+  - Removed big icon placeholder flash during file evaluation.
+  - `Image.file` with `frameBuilder` + `AnimatedOpacity` fade-in (200 ms).
+  - Subtle 24 px spinner while decoding instead of a 48 px icon.
+  - Background file-size check only affects `cacheHeight`, never blocks the visual.
+- DataTable2: fixed `dataRowHeight` (48 px) and `headingRowHeight` (56 px) to skip intrinsic measurement; cached columns and row colors.
+- Edit field alignment: `Align` + `Transform.translate(Offset(0, -1))` eliminates vertical offset pop.
+- Active edit field styling: theme primary color + bold weight.
+- Read-only fields: `SystemMouseCursors.forbidden` + hover tooltip "Cannot be edited".
+- Add-tag dialog: blocks read-only tags with a SnackBar warning.
+- Drag-and-drop: filters out non-image files before loading.
+- Open-file dialog: restricted to image extensions.
+- Frame timing: `WidgetsBinding.instance.addTimingsCallback` replaces inaccurate `Stopwatch` measurement.
+- `main_screen.dart` build refactor: extracted `_buildBody()` to flatten nested widget tree.
+
+### Fixed
+- `Ctrl+S` shortcut: `Shortcuts`/`Actions`/`Focus` pattern properly finishes in-flight table edits before saving.
+
 ## 0.1.2 - 06-01-2026
 
 ### Changed
