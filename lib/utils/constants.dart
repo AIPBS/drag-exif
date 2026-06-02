@@ -40,6 +40,11 @@ class Constants {
     'File',
     'ICC_Profile',
     'Composite',
+    'PNG',
+    'JFIF',
+    'GIF',
+    'BMP',
+    'RIFF',
   };
 
   static const Set<String> readOnlyTagNames = {
@@ -48,6 +53,13 @@ class Constants {
     'FileType',
     'FileTypeExtension',
     'MIMEType',
+    'BitDepth',
+    'ColorType',
+    'Compression',
+    'Filter',
+    'ImageHeight',
+    'ImageWidth',
+    'Interlace',
   };
 
   static bool isReadOnlyExifTag(String group, String tagName) =>

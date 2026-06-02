@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
@@ -104,6 +105,20 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     windowManager.addListener(this);
     _initWindow();
     _checkExifToolOnStartup();
+    if (kDebugMode) {
+      WidgetsBinding.instance.addTimingsCallback(_onFrameTimings);
+    }
+  }
+
+  void _onFrameTimings(List<FrameTiming> timings) {
+    for (final timing in timings) {
+      final buildMs = timing.buildDuration.inMilliseconds;
+      final rasterMs = timing.rasterDuration.inMilliseconds;
+      if (buildMs > 16 || rasterMs > 16) {
+        log('Slow frame — build: ${buildMs}ms, raster: ${rasterMs}ms',
+            name: 'dragexif.perf');
+      }
+    }
   }
 
   Future<void> _checkExifToolOnStartup() async {
@@ -233,7 +248,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     if (kDebugMode) {
       log('User clicked file: ${_allFiles[index].fileName} (#$index)', name: 'dragexif.user');
     }
-    final stopwatch = kDebugMode ? (Stopwatch()..start()) : null;
     if (_pendingEdits.isNotEmpty) {
       final action = await UnsavedChangesDialog.show(
         context,
@@ -276,32 +290,14 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _lastClickedIndex = index;
     });
 
-    _rebuildMergedView();
-    final sw = stopwatch;
-    if (sw != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        sw.stop();
-        if (sw.elapsedMilliseconds > 16) {
-          log('Slow frame after file select: ${sw.elapsedMilliseconds}ms',
-              name: 'dragexif.perf');
-        }
-      });
-    }
+    // Defer EXIF rebuild to the next frame so the file-list highlight
+    // updates immediately and doesn't wait for the heavy table build.
+    Future.delayed(Duration.zero, _rebuildMergedView);
   }
 
   void _rebuildMergedView() {
-    final stopwatch = kDebugMode ? (Stopwatch()..start()) : null;
     if (_selectedIndices.isEmpty) {
       setState(() => _mergedItems = {});
-      if (stopwatch != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          stopwatch.stop();
-          if (stopwatch.elapsedMilliseconds > 16) {
-            log('Slow frame on empty view: ${stopwatch.elapsedMilliseconds}ms',
-                name: 'dragexif.perf');
-          }
-        });
-      }
       return;
     }
 
@@ -316,16 +312,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     setState(() {
       _mergedItems = selectedTags.isEmpty ? {} : MergedTagItem.mergeFiles(selectedTags);
     });
-    final sw = stopwatch;
-    if (sw != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        sw.stop();
-        if (sw.elapsedMilliseconds > 16) {
-          log('Slow frame on EXIF rebuild: ${sw.elapsedMilliseconds}ms',
-              name: 'dragexif.perf');
-        }
-      });
-    }
   }
 
   // ──────────────────────────────────────────────────────────
@@ -781,6 +767,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Build
   // ──────────────────────────────────────────────────────────
 
+  // Toggle to false to test if the right-side panel is causing lag
+  static const bool _kShowRightPanel = true;
+
   Widget _buildBody(BuildContext context) {
     final hasChanges = _pendingEdits.isNotEmpty;
     final selectedCount = _selectedIndices.length;
@@ -848,8 +837,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
             ),
 
             // ── Right: Main content ──
-            Expanded(
-              child: Column(
+            if (_kShowRightPanel)
+              Expanded(
+                child: Column(
                 children: [
                   // Unsaved changes banner
                   if (hasChanges)

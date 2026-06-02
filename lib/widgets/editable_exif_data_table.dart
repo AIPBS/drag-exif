@@ -55,11 +55,28 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
   String? _editingGroup;
   MergedTagItem? _editingItem;
   final _editController = TextEditingController();
+  List<DataColumn2>? _cachedColumns;
+  static const double _rowHeight = 48;
+  static const double _headerHeight = 56;
+  static final _pendingRowColor = WidgetStateProperty.all(
+    Colors.blue.withValues(alpha: 0.12),
+  );
 
   @override
   void dispose() {
     _editController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant EditableExifDataTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showIndex != widget.showIndex ||
+        oldWidget.showTagId != widget.showTagId ||
+        oldWidget.showTagName != widget.showTagName ||
+        oldWidget.showTagValue != widget.showTagValue) {
+      _cachedColumns = null;
+    }
   }
 
   @override
@@ -81,8 +98,10 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
           subtitle: Text('${groupItems.length} tags'),
           children: [
             SizedBox(
-              height: groupItems.length * 52.0 + 56,
+              height: groupItems.length * _rowHeight + _headerHeight,
               child: DataTable2(
+                dataRowHeight: _rowHeight,
+                headingRowHeight: _headerHeight,
                 columnSpacing: 12,
                 horizontalMargin: 12,
                 minWidth: 600,
@@ -99,6 +118,10 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
   }
 
   List<DataColumn2> _buildColumns() {
+    return _cachedColumns ??= _createColumns();
+  }
+
+  List<DataColumn2> _createColumns() {
     final columns = <DataColumn2>[];
     const headerStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
     if (widget.showIndex) {
@@ -287,11 +310,7 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
 
     return DataRow2(
       cells: cells,
-      color: hasPending
-          ? WidgetStateProperty.all(
-              Colors.blue.withValues(alpha: 0.12),
-            )
-          : null,
+      color: hasPending ? _pendingRowColor : null,
     );
   }
 
