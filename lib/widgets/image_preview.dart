@@ -24,14 +24,21 @@ import 'package:flutter/material.dart';
 
 import '../utils/constants.dart';
 
+/// A fixed-size image preview that never changes dimensions while loading.
+///
+/// When the file path changes the widget:
+/// 1. Keeps the exact same bounds (no layout jumps)
+/// 2. Shows the image directly — no big placeholder icon flash
+/// 3. Fades the image in smoothly once decoded
+/// 4. Shows a subtle spinner while the new image is loading
 class ImagePreview extends StatefulWidget {
   final String? filePath;
-  final double maxHeight;
+  final double height;
 
   const ImagePreview({
     super.key,
     this.filePath,
-    this.maxHeight = 220,
+    this.height = 220,
   });
 
   @override
@@ -39,213 +46,116 @@ class ImagePreview extends StatefulWidget {
 }
 
 class _ImagePreviewState extends State<ImagePreview> {
-  bool _showImage = false;
-  int _fileSize = 0;
-  bool _isPreviewable = false;
-  bool _exists = false;
-  bool _evaluating = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _evaluateFile();
-  }
+  /// Optional down-scale for oversized images. Determined in the background
+  /// so it never blocks the visual transition.
+  int? _cacheHeight;
 
   @override
   void didUpdateWidget(covariant ImagePreview oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.filePath != widget.filePath) {
-      _evaluateFile();
+      _cacheHeight = null;
+      _updateCacheHeight();
     }
   }
 
-  Future<void> _evaluateFile() async {
+  Future<void> _updateCacheHeight() async {
     final path = widget.filePath;
-    if (path == null || path.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _exists = false;
-          _isPreviewable = false;
-          _fileSize = 0;
-          _showImage = false;
-          _evaluating = false;
-        });
-      }
-      return;
-    }
+    if (path == null || !Constants.isPreviewableImage(path)) return;
 
-    setState(() => _evaluating = true);
-
-    bool exists = false;
-    int size = 0;
+    int? newCacheHeight;
     try {
       final file = File(path);
-      exists = await file.exists();
-      if (exists) {
-        size = await file.length();
+      if (await file.exists()) {
+        final size = await file.length();
+        if (size > Constants.maxAutoPreviewSizeBytes) {
+          // Large file: decode at half resolution to save memory/time
+          newCacheHeight = (widget.height * 0.5).round();
+        }
       }
     } catch (_) {
-      exists = false;
-      size = 0;
+      // Ignore — Image.file errorBuilder will surface real problems
     }
 
-    if (!mounted) return;
-    // Stale result guard – path may have changed while we were async
-    if (widget.filePath != path) return;
-
-    final isPreviewable = Constants.isPreviewableImage(path);
-
-    setState(() {
-      _exists = exists;
-      _isPreviewable = isPreviewable;
-      _fileSize = size;
-      _showImage = exists && isPreviewable && size <= Constants.maxAutoPreviewSizeBytes;
-      _evaluating = false;
-    });
-  }
-
-  String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (mounted && widget.filePath == path) {
+      setState(() => _cacheHeight = newCacheHeight);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.filePath == null || widget.filePath!.isEmpty) {
-      return _placeholder(context, Icons.image, 'No preview');
-    }
+    final path = widget.filePath;
 
-    if (_evaluating) {
-      return _placeholder(context, Icons.image, 'Loading preview...');
-    }
-
-    if (!_exists) {
-      return _placeholder(context, Icons.broken_image, 'File not found');
-    }
-
-    if (!_isPreviewable) {
-      return _placeholder(
-        context,
-        Icons.image_not_supported,
-        'Preview not available',
-        subtitle: 'Format not supported by Flutter preview',
-      );
-    }
-
-    if (!_showImage) {
-      return _clickablePlaceholder(
-        context,
-        Icons.photo_size_select_large,
-        'Image too large',
-        subtitle:
-            '${_formatBytes(_fileSize)} — click to preview',
-        onTap: () => setState(() => _showImage = true),
-      );
-    }
-
-    return Container(
-      constraints: BoxConstraints(maxHeight: widget.maxHeight),
-      padding: const EdgeInsets.all(8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Image.file(
-          File(widget.filePath!),
-          key: ValueKey(widget.filePath),
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.medium,
-          cacheHeight: (widget.maxHeight * MediaQuery.of(context).devicePixelRatio * 1.5).round(),
-          errorBuilder: (context, error, stackTrace) {
-            return _placeholder(context, Icons.broken_image, 'Cannot load image');
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _placeholder(
-    BuildContext context,
-    IconData icon,
-    String label, {
-    String? subtitle,
-  }) {
-    return Container(
-      constraints: BoxConstraints(maxHeight: widget.maxHeight),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.outline,
-              fontSize: 12,
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
-                fontSize: 11,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _clickablePlaceholder(
-    BuildContext context,
-    IconData icon,
-    String label, {
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
+    // Fixed bounds — never changes size, preventing layout jumps
+    return SizedBox(
+      width: double.infinity,
+      height: widget.height,
       child: Container(
-        constraints: BoxConstraints(maxHeight: widget.maxHeight),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.outline,
-                fontSize: 12,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        alignment: Alignment.center,
+        child: path == null
+            ? _Placeholder(text: 'No preview')
+            : Image.file(
+                File(path),
+                fit: BoxFit.contain,
+                cacheHeight: _cacheHeight,
+                // frameBuilder is called every frame while the image decodes.
+                // frame == null  → image hasn't decoded yet → show spinner
+                // frame != null  → image ready → fade it in
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) {
+                    return AnimatedOpacity(
+                      opacity: 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                      child: child,
+                    );
+                  }
+                  // Subtle spinner instead of a big icon placeholder
+                  return const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return _Placeholder(
+                    text: Constants.isPreviewableImage(path)
+                        ? 'Cannot load image'
+                        : 'Preview not available',
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
-                fontSize: 11,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap to load',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
       ),
+    );
+  }
+}
+
+/// A small, centered placeholder that fits inside the fixed preview box.
+class _Placeholder extends StatelessWidget {
+  final String text;
+
+  const _Placeholder({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.image_outlined,
+          size: 32,
+          color: Theme.of(context).colorScheme.outline,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          text,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.outline,
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 }
