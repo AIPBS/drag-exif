@@ -23,6 +23,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import '../config/read_only_tags.dart' as ro;
 import '../config/type_specific/png_tags.dart' as png;
+import '../config/type_specific/jfif_tags.dart' as jfif;
+import '../config/type_specific/gif_tags.dart' as gif;
+import '../config/type_specific/bmp_tags.dart' as bmp;
+import '../config/type_specific/tiff_tags.dart' as tiff;
+import '../config/type_specific/riff_tags.dart' as riff;
+import '../config/type_specific/webp_tags.dart' as webp;
+import '../config/type_specific/heic_tags.dart' as heic;
 
 class Constants {
   static const String defaultCommands = '-fast -G -t -m -q -H';
@@ -49,6 +56,13 @@ class Constants {
 
     return switch (group) {
       'PNG' => png.pngReadOnlyTags.contains(tagName),
+      'JFIF' => jfif.jfifReadOnlyTags.contains(tagName),
+      'GIF' => gif.gifReadOnlyTags.contains(tagName),
+      'BMP' => bmp.bmpReadOnlyTags.contains(tagName),
+      'TIFF' => tiff.tiffReadOnlyTags.contains(tagName),
+      'RIFF' => riff.riffReadOnlyTags.contains(tagName),
+      'WEBP' => webp.webpReadOnlyTags.contains(tagName),
+      'HEIC' || 'HEIF' => heic.heicReadOnlyTags.contains(tagName),
       _ => false,
     };
   }
