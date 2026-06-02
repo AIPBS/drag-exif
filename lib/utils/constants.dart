@@ -20,6 +20,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+import '../config/read_only_tags.dart' as ro;
+import '../config/type_specific/png_tags.dart' as png;
+
 class Constants {
   static const String defaultCommands = '-fast -G -t -m -q -H';
   static const String appName = 'DragExif';
@@ -35,35 +39,19 @@ class Constants {
   static const String originalLicense = 'GNU General Public License v3.0 (GPLv3)';
   static const String thisProjectLicense = 'GNU General Public License v3.0 (GPLv3)';
 
-  // ── Read-only EXIF groups / tags ──
-  static const Set<String> readOnlyGroups = {
-    'File',
-    'ICC_Profile',
-    'Composite',
-    'PNG',
-    'JFIF',
-    'GIF',
-    'BMP',
-    'RIFF',
-  };
+  // Cached sets for O(1) lookup — built once on first use.
+  static final Set<String> _generalGroups = ro.general['groups']!.toSet();
+  static final Set<String> _generalTags = ro.general['tags']!.toSet();
 
-  static const Set<String> readOnlyTagNames = {
-    'ImageSize',
-    'Megapixels',
-    'FileType',
-    'FileTypeExtension',
-    'MIMEType',
-    'BitDepth',
-    'ColorType',
-    'Compression',
-    'Filter',
-    'ImageHeight',
-    'ImageWidth',
-    'Interlace',
-  };
+  static bool isReadOnlyExifTag(String group, String tagName) {
+    if (_generalGroups.contains(group)) return true;
+    if (_generalTags.contains(tagName)) return true;
 
-  static bool isReadOnlyExifTag(String group, String tagName) =>
-      readOnlyGroups.contains(group) || readOnlyTagNames.contains(tagName);
+    return switch (group) {
+      'PNG' => png.pngReadOnlyTags.contains(tagName),
+      _ => false,
+    };
+  }
 
   // ── Image format support ──
   static const List<String> supportedImageExtensions = [
