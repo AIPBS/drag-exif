@@ -120,7 +120,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedLocale,
+                initialValue: _selectedLocale,
                 items: [
                   DropdownMenuItem(value: '', child: Text(l10n.languageSystem)),
                   const DropdownMenuItem(value: 'en', child: Text('English')),

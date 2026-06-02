@@ -392,6 +392,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _lastClickedIndex = 0;
     }
 
+    if (!mounted) return;
     await windowManager.setTitle(AppLocalizations.of(context)!.windowTitleWithCount(_allFiles.length));
 
     // Verify ExifTool
