@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.0 - 05-26-2026
+
+### Added
+- **Bilingual UI** — full English and Chinese (中文) localization via `flutter_localizations`.
+  - Language can be switched in Settings or follows the system default.
+  - All UI strings, dialogs, tooltips, and error messages are localized.
+  - Chinese README added.
+
 ## 0.1.3 - 06-02-2026
 
 ### Added

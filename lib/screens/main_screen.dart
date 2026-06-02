@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_item.dart';
 import '../models/loaded_file.dart';
 import '../services/exif_tool_service.dart';
@@ -138,7 +139,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   }
 
   Future<void> _initWindow() async {
-    await windowManager.setTitle('${Constants.appName} v1.0.0');
+    await windowManager.setTitle(AppLocalizations.of(context)?.windowTitle ?? Constants.appName);
     await windowManager.setMinimumSize(const Size(700, 500));
     await windowManager.setPreventClose(true);
   }
@@ -391,7 +392,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _lastClickedIndex = 0;
     }
 
-    await windowManager.setTitle('${Constants.appName} v1.0.0 - ${_allFiles.length} files');
+    await windowManager.setTitle(AppLocalizations.of(context)!.windowTitleWithCount(_allFiles.length));
 
     // Verify ExifTool
     final exifToolResolved = await ExifToolService.checkExifToolExists(_settings.exifToolExecutable);
@@ -589,7 +590,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Changes saved')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.changesSaved)),
         );
       }
 
@@ -608,7 +609,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
         );
       }
       setState(() => _isLoading = false);
@@ -661,7 +662,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
 
   Future<void> _pickFiles() async {
     final typeGroup = XTypeGroup(
-      label: 'Images',
+      label: AppLocalizations.of(context)!.filePickerImages,
       extensions: Constants.supportedImageExtensions,
     );
     final files = await openFiles(acceptedTypeGroups: [typeGroup]);
@@ -690,7 +691,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cannot add read-only tag: ${result.tagName} ($displayGroup)'),
+            content: Text(AppLocalizations.of(context)!.cannotAddReadOnlyTag(result.tagName, displayGroup)),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -878,7 +879,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Unsaved changes (${_pendingEdits.length} ${_pendingEdits.length == 1 ? 'field' : 'fields'})',
+                              AppLocalizations.of(context)!.unsavedChangesBanner(_pendingEdits.length),
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.onErrorContainer,
                                 fontWeight: FontWeight.w600,
@@ -887,12 +888,12 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                           ),
                           TextButton(
                             onPressed: _cancelChanges,
-                            child: const Text('Discard'),
+                            child: Text(AppLocalizations.of(context)!.discard),
                           ),
                           const SizedBox(width: 8),
                           FilledButton(
                             onPressed: _saveChanges,
-                            child: const Text('Save'),
+                            child: Text(AppLocalizations.of(context)!.save),
                           ),
                         ],
                       ),
@@ -903,11 +904,11 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                     child: _error.isNotEmpty && _allFiles.isEmpty
                         ? ErrorDisplay(error: _error, details: _errorDetails)
                         : _allFiles.isEmpty && !_isLoading
-                            ? const Center(child: Text('Drop image files or click "Open files…"'))
+                            ? Center(child: Text(AppLocalizations.of(context)!.dropFilesHint))
                             : _isLoading && _mergedItems.isEmpty
                                 ? const Center(child: CircularProgressIndicator())
                                 : selectedCount == 0
-                                    ? const Center(child: Text('Select a file to view EXIF data'))
+                                    ? Center(child: Text(AppLocalizations.of(context)!.selectFileHint))
                                     : _isSwitchingFile
                                         ? Container(
                                             alignment: Alignment.center,
@@ -918,7 +919,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                             ),
                                           )
                                         : _displayItems.isEmpty
-                                            ? const Center(child: Text('No EXIF data for selected files'))
+                                            ? Center(child: Text(AppLocalizations.of(context)!.noExifData))
                                             : EditableExifDataTable(
                                                 key: _tableKey,
                                                 groupedItems: _displayItems,
@@ -949,19 +950,19 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               FilledButton.icon(
                                 onPressed: _pickFiles,
                                 icon: const Icon(Icons.folder_open, size: 18),
-                                label: const Text('Open files…'),
+                                label: Text(AppLocalizations.of(context)!.openFiles),
                               ),
                               const SizedBox(width: 8),
                               OutlinedButton.icon(
                                 onPressed: _displayItems.isEmpty ? null : _copySelected,
                                 icon: const Icon(Icons.copy, size: 18),
-                                label: const Text('Copy'),
+                                label: Text(AppLocalizations.of(context)!.copy),
                               ),
                               const SizedBox(width: 8),
                               OutlinedButton.icon(
                                 onPressed: _selectedIndices.isEmpty ? null : _showAddTagDialog,
                                 icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Add tag'),
+                                label: Text(AppLocalizations.of(context)!.addTag),
                               ),
                               const SizedBox(width: 8),
                               ExportMenu(
@@ -972,7 +973,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               ),
                               const SizedBox(width: 24),
                               PopupMenuButton<String>(
-                                tooltip: 'Menu',
+                                tooltip: AppLocalizations.of(context)!.menu,
                                 onSelected: (value) async {
                                   switch (value) {
                                     case 'settings':
@@ -985,18 +986,18 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                   }
                                 },
                                 itemBuilder: (context) => [
-                                  const PopupMenuItem(value: 'settings', child: Text('Settings…')),
-                                  const PopupMenuItem(value: 'about', child: Text('About…')),
-                                  const PopupMenuItem(value: 'exit', child: Text('Exit')),
+                                  PopupMenuItem(value: 'settings', child: Text(AppLocalizations.of(context)!.menuSettings)),
+                                  PopupMenuItem(value: 'about', child: Text(AppLocalizations.of(context)!.menuAbout)),
+                                  PopupMenuItem(value: 'exit', child: Text(AppLocalizations.of(context)!.menuExit)),
                                 ],
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('Menu'),
-                                      SizedBox(width: 4),
-                                      Icon(Icons.arrow_drop_down, size: 18),
+                                      Text(AppLocalizations.of(context)!.menu),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_drop_down, size: 18),
                                     ],
                                   ),
                                 ),

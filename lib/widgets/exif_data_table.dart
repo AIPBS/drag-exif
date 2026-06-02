@@ -22,6 +22,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_item.dart';
 
 class ExifDataTable extends StatefulWidget {
@@ -110,7 +111,7 @@ class _ExifDataTableState extends State<ExifDataTable> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          subtitle: Text('${groupItems.length} tags'),
+          subtitle: Text(AppLocalizations.of(context)!.tagCount(groupItems.length)),
           children: [
             SizedBox(
               height: groupItems.length * 48.0 + 56,
@@ -140,11 +141,12 @@ class _ExifDataTableState extends State<ExifDataTable> {
         ),
       );
     }
+    final l10n = AppLocalizations.of(context)!;
     if (widget.showTagId) {
       columns.add(
         DataColumn2(
           size: ColumnSize.S,
-          label: const Text('Tag ID'),
+          label: Text(l10n.columnTagId),
           onSort: (columnIndex, ascending) => _onSort(1, ascending),
         ),
       );
@@ -153,7 +155,7 @@ class _ExifDataTableState extends State<ExifDataTable> {
       columns.add(
         DataColumn2(
           size: ColumnSize.M,
-          label: const Text('Tag Name'),
+          label: Text(l10n.columnTagName),
           onSort: (columnIndex, ascending) => _onSort(2, ascending),
         ),
       );
@@ -162,7 +164,7 @@ class _ExifDataTableState extends State<ExifDataTable> {
       columns.add(
         DataColumn2(
           size: ColumnSize.L,
-          label: const Text('Value'),
+          label: Text(l10n.columnValue),
           onSort: (columnIndex, ascending) => _onSort(3, ascending),
         ),
       );
@@ -237,11 +239,11 @@ class _ExifDataTableState extends State<ExifDataTable> {
               Clipboard.setData(ClipboardData(text: item.tagValue));
               Navigator.of(context).pop();
             },
-            child: const Text('Copy'),
+            child: Text(AppLocalizations.of(context)!.copy),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(AppLocalizations.of(context)!.close),
           ),
         ],
       ),

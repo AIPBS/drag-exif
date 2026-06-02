@@ -19,7 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'generated/app_localizations.dart';
 import 'screens/main_screen.dart';
 import 'services/settings_service.dart';
 
@@ -36,12 +38,23 @@ class _DragExifAppState extends State<DragExifApp> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _settingsNotifier,
+      listenable: settingsNotifier,
       builder: (context, _) {
         return MaterialApp(
-          title: 'DragExif',
+          title: AppLocalizations.of(context)?.appTitle ?? 'DragExif',
           debugShowCheckedModeBanner: false,
           themeMode: _themeMode,
+          locale: _locale,
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           theme: FlexThemeData.light(
             scheme: FlexScheme.blueWhale,
             useMaterial3: true,
@@ -84,10 +97,15 @@ class _DragExifAppState extends State<DragExifApp> {
         return ThemeMode.system;
     }
   }
+
+  Locale? get _locale {
+    if (_settings.locale.isEmpty) return null;
+    return Locale(_settings.locale);
+  }
 }
 
 // Simple notifier to trigger rebuilds when settings change
-final _settingsNotifier = _SettingsNotifier();
+final settingsNotifier = _SettingsNotifier();
 
 class _SettingsNotifier extends ChangeNotifier {
   void notify() => notifyListeners();

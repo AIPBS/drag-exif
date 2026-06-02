@@ -25,6 +25,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_item.dart' show MergedTagItem;
 import '../utils/constants.dart';
 
@@ -95,7 +96,7 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
             groupName,
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
           ),
-          subtitle: Text('${groupItems.length} tags'),
+          subtitle: Text(AppLocalizations.of(context)!.tagCount(groupItems.length)),
           children: [
             SizedBox(
               height: groupItems.length * _rowHeight + _headerHeight,
@@ -124,17 +125,18 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
   List<DataColumn2> _createColumns() {
     final columns = <DataColumn2>[];
     const headerStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
+    final l10n = AppLocalizations.of(context)!;
     if (widget.showIndex) {
       columns.add(const DataColumn2(size: ColumnSize.S, label: Text('', style: headerStyle)));
     }
     if (widget.showTagId) {
-      columns.add(const DataColumn2(size: ColumnSize.S, label: Text('Tag ID', style: headerStyle)));
+      columns.add(DataColumn2(size: ColumnSize.S, label: Text(l10n.columnTagId, style: headerStyle)));
     }
     if (widget.showTagName) {
-      columns.add(const DataColumn2(size: ColumnSize.M, label: Text('Tag Name', style: headerStyle)));
+      columns.add(DataColumn2(size: ColumnSize.M, label: Text(l10n.columnTagName, style: headerStyle)));
     }
     if (widget.showTagValue) {
-      columns.add(const DataColumn2(size: ColumnSize.L, label: Text('Value', style: headerStyle)));
+      columns.add(DataColumn2(size: ColumnSize.L, label: Text(l10n.columnValue, style: headerStyle)));
     }
     // Action column (delete)
     columns.add(const DataColumn2(size: ColumnSize.S, label: Text('', style: headerStyle)));
@@ -224,7 +226,7 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Tooltip(
-                    message: 'Cannot be edited',
+                    message: AppLocalizations.of(context)!.cannotBeEdited,
                     child: Text(
                       displayValue,
                       softWrap: true,
@@ -328,11 +330,11 @@ class EditableExifDataTableState extends State<EditableExifDataTable> {
               Clipboard.setData(ClipboardData(text: item.currentValue));
               Navigator.of(context).pop();
             },
-            child: const Text('Copy'),
+            child: Text(AppLocalizations.of(context)!.copy),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(AppLocalizations.of(context)!.close),
           ),
         ],
       ),

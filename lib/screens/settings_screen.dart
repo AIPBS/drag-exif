@@ -23,6 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import '../app.dart';
+import '../generated/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../utils/constants.dart';
 
@@ -65,8 +67,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _updatePreview() => setState(() {});
 
   Future<void> _pickExecutable() async {
-    const typeGroup = XTypeGroup(
-      label: 'ExifTool binary',
+    final typeGroup = XTypeGroup(
+      label: AppLocalizations.of(context)!.exifToolBinary,
       extensions: ['exe'],
     );
     final file = await openFile(acceptedTypeGroups: [typeGroup]);
@@ -78,11 +80,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _save() {
+    final oldLocale = _settings.locale;
     _settings.themeMode = _selectedThemeIndex;
     _settings.enableWindowTopMost = _topMost;
+    _settings.locale = _selectedLocale;
     _settings.exifToolExecutable = _executableController.text.trim();
     _settings.exifToolArguments = _argumentsController.text.trim();
     _settings.save();
+    if (oldLocale != _selectedLocale) {
+      settingsNotifier.notify();
+    }
     Navigator.of(context).pop(true);
   }
 
@@ -92,10 +99,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool get _topMost => _settings.enableWindowTopMost;
   set _topMost(bool value) => setState(() => _settings.enableWindowTopMost = value);
 
+  String get _selectedLocale => _settings.locale;
+  set _selectedLocale(String value) => setState(() => _settings.locale = value);
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Settings'),
+      title: Text(l10n.settings),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
@@ -103,57 +114,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'App Theme',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              Text(
+                l10n.language,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedLocale,
+                items: [
+                  DropdownMenuItem(value: '', child: Text(l10n.languageSystem)),
+                  const DropdownMenuItem(value: 'en', child: Text('English')),
+                  const DropdownMenuItem(value: 'zh', child: Text('中文')),
+                ],
+                onChanged: (v) => _selectedLocale = v ?? '',
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.appTheme,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
                 initialValue: _selectedThemeIndex,
-                // ignore: deprecated_member_use
-                items: const [
-                  DropdownMenuItem(value: 0, child: Text('System setting')),
-                  DropdownMenuItem(value: 1, child: Text('Dark')),
-                  DropdownMenuItem(value: 2, child: Text('Light')),
+                items: [
+                  DropdownMenuItem(value: 0, child: Text(l10n.themeSystem)),
+                  DropdownMenuItem(value: 1, child: Text(l10n.themeDark)),
+                  DropdownMenuItem(value: 2, child: Text(l10n.themeLight)),
                 ],
                 onChanged: (v) => _selectedThemeIndex = v ?? 0,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
-                title: const Text('Keep window always on top'),
+                title: Text(l10n.alwaysOnTop),
                 value: _topMost,
                 onChanged: (v) => _topMost = v ?? false,
                 contentPadding: EdgeInsets.zero,
               ),
               const SizedBox(height: 24),
-              const Text(
-                'ExifTool Configurations',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              Text(
+                l10n.exifToolConfigurations,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
-              const Text('Executable Path'),
+              Text(l10n.exifToolPath),
               const SizedBox(height: 4),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _executableController,
-                      decoration: const InputDecoration(
-                        hintText: '(default)',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        hintText: l10n.exifToolPathSelect,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: _pickExecutable,
-                    child: const Text('Select…'),
+                    child: Text(l10n.exifToolPathSelect),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              const Text('Arguments'),
+              Text(l10n.exifToolArguments),
               const SizedBox(height: 4),
               TextField(
                 controller: _argumentsController,
@@ -162,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Preview'),
+              Text(l10n.previewSettings),
               const SizedBox(height: 4),
               Container(
                 constraints: const BoxConstraints(maxHeight: 80),
@@ -185,11 +211,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: _save,
-          child: const Text('OK'),
+          child: Text(l10n.ok),
         ),
       ],
     );

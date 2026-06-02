@@ -20,6 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
 
+import '../generated/app_localizations.dart';
+
 enum UnsavedAction { save, discard, cancel }
 
 class UnsavedChangesDialog extends StatelessWidget {
@@ -32,30 +34,28 @@ class UnsavedChangesDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.warning_amber, color: Colors.orange),
-          SizedBox(width: 8),
-          Text('Unsaved Changes'),
+          const Icon(Icons.warning_amber, color: Colors.orange),
+          const SizedBox(width: 8),
+          Text(l10n.unsavedChangesDialogTitle),
         ],
       ),
-      content: Text(
-        'You have $changeCount unsaved ${changeCount == 1 ? 'change' : 'changes'}. '
-        'Do you want to save them before continuing?',
-      ),
+      content: Text(l10n.unsavedChangesDialogContent(changeCount)),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(UnsavedAction.cancel),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(UnsavedAction.discard),
-          child: const Text('Discard'),
+          child: Text(l10n.discard),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(UnsavedAction.save),
-          child: const Text('Save'),
+          child: Text(l10n.save),
         ),
       ],
     );

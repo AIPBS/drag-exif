@@ -1,0 +1,93 @@
+{
+  "@@locale": "zh",
+  "appTitle": "图像 EXIF 编辑器",
+  "appSubtitle": "EXIF 元数据查看器",
+  "windowTitle": "图像 EXIF 编辑器 v1.0.0",
+  "windowTitleWithCount": "图像 EXIF 编辑器 v1.0.0 - {count} 个文件",
+
+  "menu": "菜单",
+  "menuSettings": "设置…",
+  "menuAbout": "关于…",
+  "menuExit": "退出",
+
+  "openFiles": "打开文件…",
+  "copy": "复制",
+  "addTag": "添加标签",
+  "save": "保存",
+  "discard": "放弃",
+  "cancel": "取消",
+  "ok": "确定",
+  "close": "关闭",
+
+  "unsavedChangesBanner": "未保存的更改 ({count} 个字段)",
+  "unsavedChangesDialogTitle": "未保存的更改",
+  "unsavedChangesDialogContent": "您有 {count} 个未保存的更改。您想在继续之前保存它们吗？",
+
+  "changesSaved": "更改已保存",
+  "saveFailed": "保存失败：{error}",
+  "cannotAddReadOnlyTag": "无法添加只读标签：{tagName} ({group})",
+
+  "dropFilesHint": "拖放图像文件或点击\"打开文件…\"",
+  "selectFileHint": "选择文件以查看 EXIF 数据",
+  "noExifData": "所选文件没有 EXIF 数据",
+
+  "preview": "预览",
+  "noPreview": "无预览",
+  "cannotLoadImage": "无法加载图像",
+  "previewNotAvailable": "预览不可用",
+
+  "settings": "设置",
+  "themeMode": "主题",
+  "themeSystem": "系统设置",
+  "themeDark": "深色",
+  "themeLight": "浅色",
+  "alwaysOnTop": "保持窗口置顶",
+  "exifToolPath": "可执行文件路径",
+  "exifToolPathSelect": "选择…",
+  "exifToolArguments": "参数",
+  "previewSettings": "预览",
+
+  "about": "关于",
+  "version": "版本：{version}",
+  "copyright": "版权所有 © 2026 Allen",
+  "allRightsReserved": "保留所有权利。",
+  "credits": "致谢",
+  "creditExifTool": "ExifTool",
+  "creditExifToolLicense": "根据 Artistic 许可证条款分发。\n版权所有 © Phil Harvey。",
+  "creditFlutter": "Flutter",
+  "creditFlutterLicense": "根据 BSD 许可证条款分发。\n版权所有 © Google LLC。",
+
+  "addTagDialogTitle": "添加 EXIF 标签",
+  "addTagDialogSearchHint": "输入搜索标签（例如：日期、GPS、镜头…）",
+  "addTagDialogCustomNameHint": "输入自定义标签名称",
+  "addTagDialogValueHint": "输入标签值",
+  "addTagDialogNoMatchingTags": "没有匹配的标签",
+  "addTagDialogCustomTag": "自定义标签",
+  "addTagDialogTagLabel": "标签：{tagName} ({group})",
+  "addTagDialogTagsAvailable": "{count} 个标签可用",
+
+  "tagCount": "{count} 个标签",
+  "cannotBeEdited": "无法编辑",
+
+  "exportAs": "导出为…",
+  "exportText": "文本文件…",
+  "exportCsv": "CSV 文件…",
+  "exportJson": "JSON 文件…",
+
+  "filePickerImages": "图像",
+  "fileCount": "{count} 个文件",
+  "selectedCount": "已选择 {count} 个",
+
+  "columnTagId": "标签 ID",
+  "columnTagName": "标签名称",
+  "columnValue": "值",
+
+  "appTheme": "应用主题",
+  "exifToolConfigurations": "ExifTool 配置",
+  "exifToolBinary": "ExifTool 可执行文件",
+
+  "language": "语言",
+  "languageSystem": "系统默认",
+  "languageEnglish": "English",
+  "languageChinese": "中文"
+}

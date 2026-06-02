@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../generated/app_localizations.dart';
 import '../utils/constants.dart';
 
 class AboutScreen extends StatefulWidget {
@@ -58,8 +59,9 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('About'),
+      title: Text(l10n.about),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
@@ -86,17 +88,17 @@ class _AboutScreenState extends State<AboutScreen> {
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                         ),
-                        const Text('EXIF metadata viewer'),
+                        Text(l10n.appSubtitle),
                       ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Version: $_version', style: const TextStyle(fontSize: 16)),
+              Text(l10n.version(_version), style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 8),
-              const Text('Copyright © 2026 by Allen'),
-              const Text('All rights reserved.'),
+              Text(l10n.copyright),
+              Text(l10n.allRightsReserved),
               const SizedBox(height: 12),
               InkWell(
                 onTap: () => _launchUrl('https://github.com/AIPEAC/drag-exif'),
@@ -153,17 +155,17 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const ExpansionTile(
-                title: Text('Credits', style: TextStyle(fontWeight: FontWeight.w600)),
+              ExpansionTile(
+                title: Text(l10n.credits, style: const TextStyle(fontWeight: FontWeight.w600)),
                 children: [
                   ListTile(
-                    title: Text('ExifTool'),
-                    subtitle: Text('Distributed under the terms of the Artistic license.\nCopyright © Phil Harvey.'),
+                    title: Text(l10n.creditExifTool),
+                    subtitle: Text(l10n.creditExifToolLicense),
                     dense: true,
                   ),
                   ListTile(
-                    title: Text('Flutter'),
-                    subtitle: Text('Distributed under the terms of the BSD license.\nCopyright © Google LLC.'),
+                    title: Text(l10n.creditFlutter),
+                    subtitle: Text(l10n.creditFlutterLicense),
                     dense: true,
                   ),
                 ],
@@ -175,7 +177,7 @@ class _AboutScreenState extends State<AboutScreen> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(l10n.close),
         ),
       ],
     );

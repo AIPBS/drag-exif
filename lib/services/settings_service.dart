@@ -44,6 +44,7 @@ class SettingsService {
   // App settings
   int themeMode = 0; // 0 = system, 1 = dark, 2 = light
   bool enableWindowTopMost = false;
+  String locale = ''; // '' = system default, 'en', 'zh'
 
   // ExifTool settings
   String exifToolExecutable = '';
@@ -111,6 +112,7 @@ class SettingsService {
   Future<void> _loadFromPrefs() async {
     themeMode = _prefs.getInt('themeMode') ?? themeMode;
     enableWindowTopMost = _prefs.getBool('enableWindowTopMost') ?? enableWindowTopMost;
+    locale = _prefs.getString('locale') ?? locale;
     showColumnIndex = _prefs.getBool('showColumnIndex') ?? showColumnIndex;
     showColumnTagId = _prefs.getBool('showColumnTagId') ?? showColumnTagId;
     showColumnTagName = _prefs.getBool('showColumnTagName') ?? showColumnTagName;
@@ -120,6 +122,7 @@ class SettingsService {
   Future<void> _saveToPrefs() async {
     await _prefs.setInt('themeMode', themeMode);
     await _prefs.setBool('enableWindowTopMost', enableWindowTopMost);
+    await _prefs.setString('locale', locale);
     await _prefs.setBool('showColumnIndex', showColumnIndex);
     await _prefs.setBool('showColumnTagId', showColumnTagId);
     await _prefs.setBool('showColumnTagName', showColumnTagName);

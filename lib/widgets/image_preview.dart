@@ -22,6 +22,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../generated/app_localizations.dart';
 import '../utils/constants.dart';
 
 /// A fixed-size image preview that never changes dimensions while loading.
@@ -94,7 +95,7 @@ class _ImagePreviewState extends State<ImagePreview> {
         color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         alignment: Alignment.center,
         child: path == null
-            ? _Placeholder(text: 'No preview')
+            ? _Placeholder(text: AppLocalizations.of(context)!.noPreview)
             : Image.file(
                 File(path),
                 fit: BoxFit.contain,
@@ -121,8 +122,8 @@ class _ImagePreviewState extends State<ImagePreview> {
                 errorBuilder: (context, error, stackTrace) {
                   return _Placeholder(
                     text: Constants.isPreviewableImage(path)
-                        ? 'Cannot load image'
-                        : 'Preview not available',
+                        ? AppLocalizations.of(context)!.cannotLoadImage
+                        : AppLocalizations.of(context)!.previewNotAvailable,
                   );
                 },
               ),

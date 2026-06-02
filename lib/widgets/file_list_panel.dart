@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/loaded_file.dart';
 import '../utils/constants.dart';
 import 'image_preview.dart';
@@ -117,7 +118,7 @@ class _FileListPanelState extends State<FileListPanel> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${widget.files.length} file${widget.files.length == 1 ? '' : 's'}',
+                  AppLocalizations.of(context)!.fileCount(widget.files.length),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -126,7 +127,7 @@ class _FileListPanelState extends State<FileListPanel> {
                 ),
               ),
               Text(
-                '${widget.selectedIndices.length} selected',
+                AppLocalizations.of(context)!.selectedCount(widget.selectedIndices.length),
                 style: TextStyle(
                   fontSize: 11,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -268,7 +269,7 @@ class _FileListPanelState extends State<FileListPanel> {
                       Icon(Icons.preview, size: 18, color: theme.colorScheme.onSurfaceVariant),
                       const SizedBox(width: 6),
                       Text(
-                        'Preview',
+                        AppLocalizations.of(context)!.preview,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
