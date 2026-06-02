@@ -97,6 +97,13 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   bool _dragging = false;
   double _leftPanelWidth = 260;
 
+  // ── Perceived-performance: file-switching guard ──
+  // When true the right panel shows a lightweight spinner instead of the
+  // heavy EditableExifDataTable. This keeps the frame that updates the
+  // file-list highlight fast (<16 ms) so the highlight feels instant.
+  bool _isSwitchingFile = false;
+  int _rebuildGeneration = 0;
+
   final _tableKey = GlobalKey<EditableExifDataTableState>();
 
   @override
@@ -266,7 +273,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       }
     }
 
+    final generation = ++_rebuildGeneration;
+
     setState(() {
+      _isSwitchingFile = true;
       if (shift && _lastClickedIndex != null) {
         final start = _lastClickedIndex!;
         final end = index;
@@ -290,14 +300,20 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _lastClickedIndex = index;
     });
 
-    // Defer EXIF rebuild to the next frame so the file-list highlight
-    // updates immediately and doesn't wait for the heavy table build.
-    Future.delayed(Duration.zero, _rebuildMergedView);
+    // Defer the heavy EXIF table rebuild so the highlight frame stays fast.
+    Future.delayed(Duration.zero, () {
+      if (_rebuildGeneration != generation) return; // stale click
+      _rebuildMergedView();
+    });
   }
 
   void _rebuildMergedView() {
     if (_selectedIndices.isEmpty) {
-      setState(() => _mergedItems = {});
+      setState(() {
+        _mergedItems = {};
+        _displayItems = {};
+        _isSwitchingFile = false;
+      });
       return;
     }
 
@@ -309,8 +325,22 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       }
     }
 
+    final merged = selectedTags.isEmpty
+        ? <String, List<MergedTagItem>>{}
+        : MergedTagItem.mergeFiles(selectedTags);
+
+    final display = <String, List<MergedTagItem>>{};
+    for (final entry in merged.entries) {
+      display[entry.key] = List.from(entry.value);
+    }
+    for (final entry in _newTags.entries) {
+      display.putIfAbsent(entry.key, () => []).addAll(entry.value);
+    }
+
     setState(() {
-      _mergedItems = selectedTags.isEmpty ? {} : MergedTagItem.mergeFiles(selectedTags);
+      _mergedItems = merged;
+      _displayItems = display;
+      _isSwitchingFile = false;
     });
   }
 
@@ -644,16 +674,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Clipboard / Export
   // ──────────────────────────────────────────────────────────
 
-  Map<String, List<MergedTagItem>> get _displayItems {
-    final result = <String, List<MergedTagItem>>{};
-    for (final entry in _mergedItems.entries) {
-      result[entry.key] = List.from(entry.value);
-    }
-    for (final entry in _newTags.entries) {
-      result.putIfAbsent(entry.key, () => []).addAll(entry.value);
-    }
-    return result;
-  }
+  Map<String, List<MergedTagItem>> _displayItems = {};
 
   Future<void> _showAddTagDialog() async {
     if (_selectedIndices.isEmpty) return;
@@ -887,17 +908,26 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                 ? const Center(child: CircularProgressIndicator())
                                 : selectedCount == 0
                                     ? const Center(child: Text('Select a file to view EXIF data'))
-                                    : _displayItems.isEmpty
-                                        ? const Center(child: Text('No EXIF data for selected files'))
-                                        : EditableExifDataTable(
-                                            key: _tableKey,
-                                            groupedItems: _displayItems,
-                                            showIndex: _settings.showColumnIndex,
-                                            showTagId: _settings.showColumnTagId,
-                                            showTagName: _settings.showColumnTagName,
-                                            showTagValue: _settings.showColumnTagValue,
-                                            onEdit: _onEdit,
-                                          ),
+                                    : _isSwitchingFile
+                                        ? Container(
+                                            alignment: Alignment.center,
+                                            child: const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            ),
+                                          )
+                                        : _displayItems.isEmpty
+                                            ? const Center(child: Text('No EXIF data for selected files'))
+                                            : EditableExifDataTable(
+                                                key: _tableKey,
+                                                groupedItems: _displayItems,
+                                                showIndex: _settings.showColumnIndex,
+                                                showTagId: _settings.showColumnTagId,
+                                                showTagName: _settings.showColumnTagName,
+                                                showTagValue: _settings.showColumnTagValue,
+                                                onEdit: _onEdit,
+                                              ),
                   ),
 
                   // Footer
