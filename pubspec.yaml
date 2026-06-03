@@ -55,6 +55,8 @@ msix_config:
   capabilities: internetClient
   execution_alias: dragexif
   install_certificate: false
+  # Target only desktop — Flutter does not support Mobile, Xbox, Team, or MR
+  target_device_family: windows.desktop
 
 flutter:
   uses-material-design: true

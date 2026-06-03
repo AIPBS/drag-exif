@@ -23,10 +23,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
-import '../app.dart';
 import '../generated/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../utils/constants.dart';
+import '../utils/locale_notifier.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -88,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _settings.exifToolArguments = _argumentsController.text.trim();
     _settings.save();
     if (oldLocale != _selectedLocale) {
-      settingsNotifier.notify();
+      localeNotifier.value = _selectedLocale.isEmpty ? null : Locale(_selectedLocale);
     }
     Navigator.of(context).pop(true);
   }

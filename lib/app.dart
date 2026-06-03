@@ -24,6 +24,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'generated/app_localizations.dart';
 import 'screens/main_screen.dart';
 import 'services/settings_service.dart';
+import 'utils/locale_notifier.dart';
 
 class DragExifApp extends StatefulWidget {
   const DragExifApp({super.key});
@@ -37,14 +38,14 @@ class _DragExifAppState extends State<DragExifApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: settingsNotifier,
-      builder: (context, _) {
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: localeNotifier,
+      builder: (context, locale, _) {
         return MaterialApp(
-          title: AppLocalizations.of(context)?.appTitle ?? 'DragExif',
+          title: 'DragExif',
           debugShowCheckedModeBanner: false,
           themeMode: _themeMode,
-          locale: _locale,
+          locale: locale ?? _locale,
           supportedLocales: const [
             Locale('en'),
             Locale('zh'),
@@ -102,11 +103,4 @@ class _DragExifAppState extends State<DragExifApp> {
     if (_settings.locale.isEmpty) return null;
     return Locale(_settings.locale);
   }
-}
-
-// Simple notifier to trigger rebuilds when settings change
-final settingsNotifier = _SettingsNotifier();
-
-class _SettingsNotifier extends ChangeNotifier {
-  void notify() => notifyListeners();
 }
