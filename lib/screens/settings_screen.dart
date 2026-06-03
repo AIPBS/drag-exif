@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:window_manager/window_manager.dart';
 
 import '../generated/app_localizations.dart';
 import '../services/settings_service.dart';
@@ -111,15 +110,6 @@ class _SettingsPageState extends State<SettingsPage> {
     localeNotifier.value = code.isEmpty ? null : Locale(code);
   }
 
-  // ── Always-on-top ──
-
-  bool get _topMost => _settings.enableWindowTopMost;
-
-  void _onTopMostChanged(bool value) {
-    setState(() => _settings.enableWindowTopMost = value);
-    _settings.save();
-    windowManager.setAlwaysOnTop(value);
-  }
 
   // ── ExifTool ──
 
@@ -182,13 +172,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 16),
 
-                CheckboxListTile(
-                  title: Text(l10n.alwaysOnTop),
-                  value: _topMost,
-                  onChanged: (v) => _onTopMostChanged(v ?? false),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: 24),
+                
 
                 // ── ExifTool ──
                 Text(
