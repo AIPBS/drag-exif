@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.1 - 06-03-2026
+
+### Fixed
+- **Linux window not appearing** — `runApp()` was called after `await windowManager.waitUntilReadyToShow()`, preventing the native GTK `first_frame_cb` from firing and showing the window. Moved `runApp()` before `waitUntilReadyToShow()` and removed the `await`.
+- **`initState` localization error** — `_initWindow()` used `AppLocalizations.of(context)` before `initState()` completed. Deferred to a post-frame callback via `addPostFrameCallback`.
+- Removed `Colors.transparent` window background on Linux to avoid GTK CSS transparency issues with certain window managers.
+
 ## 1.0.0 - 05-26-2026
 
 ### Added

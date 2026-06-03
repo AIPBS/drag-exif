@@ -111,7 +111,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   void initState() {
     super.initState();
     windowManager.addListener(this);
-    _initWindow();
+    // Defer window config to after the first frame — _initWindow uses
+    // AppLocalizations.of(context) which requires the widget tree to be built.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initWindow());
     _checkExifToolOnStartup();
     if (kDebugMode) {
       WidgetsBinding.instance.addTimingsCallback(_onFrameTimings);

@@ -40,13 +40,19 @@ void main() async {
       settings.windowHeight.toDouble(),
     ),
     center: true,
-    backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
     alwaysOnTop: settings.enableWindowTopMost,
   );
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+  // Start Flutter first so the native window is created and the first frame
+  // can render — otherwise native first_frame_cb never fires and the GTK
+  // window stays hidden.
+  runApp(const DragExifApp());
+
+  // Apply window options and show asynchronously after Flutter is running.
+  // Not awaited so we don't block the Flutter engine startup.
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
     if (settings.isMaximized) {
@@ -60,6 +66,4 @@ void main() async {
       );
     }
   });
-
-  runApp(const DragExifApp());
 }
