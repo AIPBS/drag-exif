@@ -22,20 +22,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../generated/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../utils/constants.dart';
 import '../utils/locale_notifier.dart';
 
-class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsPageState extends State<SettingsPage> {
   final _settings = SettingsService();
   late final _executableController = TextEditingController();
   late final _argumentsController = TextEditingController();
@@ -79,145 +80,175 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _save() {
-    final oldLocale = _settings.locale;
-    _settings.themeMode = _selectedThemeIndex;
-    _settings.enableWindowTopMost = _topMost;
-    _settings.locale = _selectedLocale;
+  // ── Theme ──
+
+  int get _themeIndex => _settings.themeMode;
+
+  void _onThemeChanged(int index) {
+    setState(() => _settings.themeMode = index);
+    _settings.save();
+    themeModeNotifier.value = _themeModeFromIndex(index);
+  }
+
+  ThemeMode _themeModeFromIndex(int index) {
+    switch (index) {
+      case 1:
+        return ThemeMode.dark;
+      case 2:
+        return ThemeMode.light;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  // ── Locale ──
+
+  String get _localeCode => _settings.locale;
+
+  void _onLocaleChanged(String code) {
+    setState(() => _settings.locale = code);
+    _settings.save();
+    localeNotifier.value = code.isEmpty ? null : Locale(code);
+  }
+
+  // ── Always-on-top ──
+
+  bool get _topMost => _settings.enableWindowTopMost;
+
+  void _onTopMostChanged(bool value) {
+    setState(() => _settings.enableWindowTopMost = value);
+    _settings.save();
+    windowManager.setAlwaysOnTop(value);
+  }
+
+  // ── ExifTool ──
+
+  void _onExifToolChanged() {
     _settings.exifToolExecutable = _executableController.text.trim();
     _settings.exifToolArguments = _argumentsController.text.trim();
     _settings.save();
-    if (oldLocale != _selectedLocale) {
-      localeNotifier.value = _selectedLocale.isEmpty ? null : Locale(_selectedLocale);
-    }
-    Navigator.of(context).pop(true);
   }
-
-  int get _selectedThemeIndex => _settings.themeMode;
-  set _selectedThemeIndex(int value) => setState(() => _settings.themeMode = value);
-
-  bool get _topMost => _settings.enableWindowTopMost;
-  set _topMost(bool value) => setState(() => _settings.enableWindowTopMost = value);
-
-  String get _selectedLocale => _settings.locale;
-  set _selectedLocale(String value) => setState(() => _settings.locale = value);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return AlertDialog(
-      title: Text(l10n.settings),
-      content: SizedBox(
-        width: 500,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.language,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedLocale,
-                items: [
-                  DropdownMenuItem(value: '', child: Text(l10n.languageSystem)),
-                  const DropdownMenuItem(value: 'en', child: Text('English')),
-                  const DropdownMenuItem(value: 'zh', child: Text('中文')),
-                ],
-                onChanged: (v) => _selectedLocale = v ?? '',
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.appTheme,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
-                initialValue: _selectedThemeIndex,
-                items: [
-                  DropdownMenuItem(value: 0, child: Text(l10n.themeSystem)),
-                  DropdownMenuItem(value: 1, child: Text(l10n.themeDark)),
-                  DropdownMenuItem(value: 2, child: Text(l10n.themeLight)),
-                ],
-                onChanged: (v) => _selectedThemeIndex = v ?? 0,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              CheckboxListTile(
-                title: Text(l10n.alwaysOnTop),
-                value: _topMost,
-                onChanged: (v) => _topMost = v ?? false,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                l10n.exifToolConfigurations,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              Text(l10n.exifToolPath),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _executableController,
-                      decoration: InputDecoration(
-                        hintText: l10n.exifToolPathSelect,
-                        border: const OutlineInputBorder(),
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.settings)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Appearance ──
+                Text(
+                  l10n.appTheme,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  initialValue: _themeIndex,
+                  items: [
+                    DropdownMenuItem(value: 0, child: Text(l10n.themeSystem)),
+                    DropdownMenuItem(value: 1, child: Text(l10n.themeDark)),
+                    DropdownMenuItem(value: 2, child: Text(l10n.themeLight)),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) _onThemeChanged(v);
+                  },
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+
+                Text(
+                  l10n.language,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: _localeCode,
+                  items: [
+                    DropdownMenuItem(value: '', child: Text(l10n.languageSystem)),
+                    const DropdownMenuItem(value: 'en', child: Text('English')),
+                    const DropdownMenuItem(value: 'zh', child: Text('中文')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) _onLocaleChanged(v);
+                  },
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+
+                CheckboxListTile(
+                  title: Text(l10n.alwaysOnTop),
+                  value: _topMost,
+                  onChanged: (v) => _onTopMostChanged(v ?? false),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 24),
+
+                // ── ExifTool ──
+                Text(
+                  l10n.exifToolConfigurations,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                Text(l10n.exifToolPath),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _executableController,
+                        decoration: InputDecoration(
+                          hintText: l10n.exifToolPathSelect,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (_) => _onExifToolChanged(),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: _pickExecutable,
-                    child: Text(l10n.exifToolPathSelect),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(l10n.exifToolArguments),
-              const SizedBox(height: 4),
-              TextField(
-                controller: _argumentsController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: _pickExecutable,
+                      child: Text(l10n.exifToolPathSelect),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(l10n.previewSettings),
-              const SizedBox(height: 4),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 80),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(4),
+                const SizedBox(height: 16),
+                Text(l10n.exifToolArguments),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: _argumentsController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => _onExifToolChanged(),
                 ),
-                child: SingleChildScrollView(
-                  child: SelectableText(
-                    _previewCommand,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                const SizedBox(height: 16),
+                Text(l10n.previewSettings),
+                const SizedBox(height: 4),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 80),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      _previewCommand,
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: _save,
-          child: Text(l10n.ok),
-        ),
-      ],
     );
   }
 }

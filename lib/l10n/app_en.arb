@@ -1,5 +1,6 @@
 {
   "@@locale": "en",
+  "tabHome": "Home",
   "appTitle": "DragExif",
   "appSubtitle": "EXIF metadata viewer",
   "windowTitle": "DragExif v1.0.0",

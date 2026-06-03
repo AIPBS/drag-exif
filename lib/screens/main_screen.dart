@@ -73,6 +73,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   final _exifTool = ExifToolService();
   final _settings = SettingsService();
 
+  /// 0 = Home, 1 = Settings (rightmost as required by project conventions).
+  int _currentTab = 0;
+
   // All loaded files
   final List<LoadedFile> _allFiles = [];
 
@@ -765,22 +768,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Settings / About
   // ──────────────────────────────────────────────────────────
 
-  Future<void> _showSettings() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (_) => const SettingsScreen(),
-    );
-    if (result == true && _allFiles.isNotEmpty) {
-      final args = _settings.exifToolArguments.isNotEmpty
-          ? _settings.exifToolArguments.split(' ')
-          : <String>[];
-      await Future.wait(
-        List.generate(_allFiles.length, (i) => _loadExifForIndex(i, args)),
-      );
-      _rebuildMergedView();
-    }
-  }
-
   Future<void> _showAbout() async {
     await showDialog(
       context: context,
@@ -979,8 +966,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                 tooltip: AppLocalizations.of(context)!.menu,
                                 onSelected: (value) async {
                                   switch (value) {
-                                    case 'settings':
-                                      await _showSettings();
                                     case 'about':
                                       await _showAbout();
                                     case 'exit':
@@ -989,7 +974,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                   }
                                 },
                                 itemBuilder: (context) => [
-                                  PopupMenuItem(value: 'settings', child: Text(AppLocalizations.of(context)!.menuSettings)),
                                   PopupMenuItem(value: 'about', child: Text(AppLocalizations.of(context)!.menuAbout)),
                                   PopupMenuItem(value: 'exit', child: Text(AppLocalizations.of(context)!.menuExit)),
                                 ],
@@ -1041,7 +1025,31 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         child: Focus(
           autofocus: true,
           child: Scaffold(
-            body: _buildBody(context),
+            body: IndexedStack(
+              index: _currentTab,
+              children: [
+                _buildBody(context),
+                const SettingsPage(),
+              ],
+            ),
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: _currentTab,
+              onDestinationSelected: (index) {
+                setState(() => _currentTab = index);
+              },
+              destinations: [
+                NavigationDestination(
+                  icon: const Icon(Icons.home_outlined),
+                  selectedIcon: const Icon(Icons.home),
+                  label: AppLocalizations.of(context)!.tabHome,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: AppLocalizations.of(context)!.settings,
+                ),
+              ],
+            ),
           ),
         ),
       ),

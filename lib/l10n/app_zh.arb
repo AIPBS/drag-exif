@@ -1,5 +1,6 @@
 {
   "@@locale": "zh",
+  "tabHome": "首页",
   "appTitle": "图像 EXIF 编辑器",
   "appSubtitle": "EXIF 元数据查看器",
   "windowTitle": "图像 EXIF 编辑器 v1.0.0",

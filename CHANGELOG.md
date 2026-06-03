@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.2 - 06-03-2026
+
+### Changed
+- **Settings exposed in bottom navigation bar** — Settings is no longer hidden in a popup menu. It's now a dedicated tab (rightmost) in a `NavigationBar` + `IndexedStack`, as required by project conventions.
+- **Settings converted from dialog to full page** — all changes apply immediately without needing OK/Cancel. Theme and locale dropdowns now trigger instant app rebuilds.
+
+### Fixed
+- **Theme/locale changes now apply immediately** — the setters were updating `_settings` on dropdown change BEFORE `_save()` ran, so the `oldLocale != _selectedLocale` check was always false and `localeNotifier` was never updated. Added `themeModeNotifier` for theme reactivity. Both notifiers are now seeded from saved preferences on startup and triggered on every change.
+
 ## 1.0.1 - 06-03-2026
 
 ### Fixed

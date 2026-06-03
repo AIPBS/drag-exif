@@ -9,6 +9,9 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get tabHome => '首页';
+
+  @override
   String get appTitle => '图像 EXIF 编辑器';
 
   @override

@@ -22,6 +22,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'services/settings_service.dart';
+import 'utils/locale_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,12 @@ void main() async {
   // Load settings
   final settings = SettingsService();
   await settings.init();
+
+  // Seed global notifiers from saved preferences so the app starts
+  // with the correct theme and locale without restart.
+  themeModeNotifier.value = _themeModeFromIndex(settings.themeMode);
+  localeNotifier.value =
+      settings.locale.isEmpty ? null : Locale(settings.locale);
 
   // Window options
   final windowOptions = WindowOptions(
@@ -66,4 +73,15 @@ void main() async {
       );
     }
   });
+}
+
+ThemeMode _themeModeFromIndex(int index) {
+  switch (index) {
+    case 1:
+      return ThemeMode.dark;
+    case 2:
+      return ThemeMode.light;
+    default:
+      return ThemeMode.system;
+  }
 }
