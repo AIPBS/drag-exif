@@ -1,0 +1,94 @@
+{
+  "@@locale": "en",
+  "tabHome": "Home",
+  "appTitle": "DragExif",
+  "appSubtitle": "EXIF metadata viewer",
+  "windowTitle": "DragExif v1.0.0",
+  "windowTitleWithCount": "DragExif v1.0.0 - {count} files",
+
+  "menu": "Menu",
+  "menuSettings": "Settings…",
+  "menuAbout": "About…",
+  "menuExit": "Exit",
+
+  "openFiles": "Open files…",
+  "copy": "Copy",
+  "addTag": "Add tag",
+  "save": "Save",
+  "discard": "Discard",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "close": "Close",
+
+  "unsavedChangesBanner": "Unsaved changes ({count} {count, plural, =1 {field} other {fields}})",
+  "unsavedChangesDialogTitle": "Unsaved Changes",
+  "unsavedChangesDialogContent": "You have {count} unsaved {count, plural, =1 {change} other {changes}}. Do you want to save them before continuing?",
+
+  "changesSaved": "Changes saved",
+  "saveFailed": "Save failed: {error}",
+  "cannotAddReadOnlyTag": "Cannot add read-only tag: {tagName} ({group})",
+
+  "dropFilesHint": "Drop image files or click \"Open files…\"",
+  "selectFileHint": "Select a file to view EXIF data",
+  "noExifData": "No EXIF data for selected files",
+
+  "preview": "Preview",
+  "noPreview": "No preview",
+  "cannotLoadImage": "Cannot load image",
+  "previewNotAvailable": "Preview not available",
+
+  "settings": "Settings",
+  "themeMode": "Theme",
+  "themeSystem": "System setting",
+  "themeDark": "Dark",
+  "themeLight": "Light",
+  "alwaysOnTop": "Keep window always on top",
+  "exifToolPath": "Executable Path",
+  "exifToolPathSelect": "Select…",
+  "exifToolArguments": "Arguments",
+  "previewSettings": "Preview",
+
+  "about": "About",
+  "version": "Version: {version}",
+  "copyright": "Copyright © 2026 by Allen",
+  "allRightsReserved": "All rights reserved.",
+  "credits": "Credits",
+  "creditExifTool": "ExifTool",
+  "creditExifToolLicense": "Distributed under the terms of the Artistic license.\nCopyright © Phil Harvey.",
+  "creditFlutter": "Flutter",
+  "creditFlutterLicense": "Distributed under the terms of the BSD license.\nCopyright © Google LLC.",
+
+  "addTagDialogTitle": "Add EXIF Tag",
+  "addTagDialogSearchHint": "Type to search tags (e.g. Date, GPS, Lens...)",
+  "addTagDialogCustomNameHint": "Enter custom tag name",
+  "addTagDialogValueHint": "Enter tag value",
+  "addTagDialogNoMatchingTags": "No matching tags",
+  "addTagDialogCustomTag": "Custom tag",
+  "addTagDialogTagLabel": "Tag: {tagName} ({group})",
+  "addTagDialogTagsAvailable": "{count} tags available",
+
+  "tagCount": "{count} tags",
+  "cannotBeEdited": "Cannot be edited",
+
+  "exportAs": "Export as…",
+  "exportText": "Text file…",
+  "exportCsv": "CSV file…",
+  "exportJson": "JSON file…",
+
+  "filePickerImages": "Images",
+  "fileCount": "{count} {count, plural, =1 {file} other {files}}",
+  "selectedCount": "{count} selected",
+
+  "columnTagId": "Tag ID",
+  "columnTagName": "Tag Name",
+  "columnValue": "Value",
+
+  "appTheme": "App Theme",
+  "exifToolConfigurations": "ExifTool Configurations",
+  "exifToolBinary": "ExifTool binary",
+
+  "language": "Language",
+  "languageSystem": "System default",
+  "languageEnglish": "English",
+  "languageChinese": "中文 (Chinese)"
+}

@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_definition.dart';
 import '../services/exif_tag_catalog.dart';
 
@@ -95,6 +96,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Dialog(
@@ -113,7 +115,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
                   Icon(Icons.add_circle_outline, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(
-                    'Add EXIF Tag',
+                    l10n.addTagDialogTitle,
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -125,7 +127,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
                 controller: _searchController,
                 focusNode: _focusNode,
                 decoration: InputDecoration(
-                  hintText: 'Type to search tags (e.g. Date, GPS, Lens...)',
+                  hintText: l10n.addTagDialogSearchHint,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -141,7 +143,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_filtered.length} tags available',
+                l10n.addTagDialogTagsAvailable(_filtered.length),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -158,7 +160,7 @@ class _AddTagDialogState extends State<AddTagDialog> {
                             const Icon(Icons.search_off, size: 40, color: Colors.grey),
                             const SizedBox(height: 8),
                             Text(
-                              'No matching tags',
+                              l10n.addTagDialogNoMatchingTags,
                               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                             ),
                           ],
@@ -192,15 +194,15 @@ class _AddTagDialogState extends State<AddTagDialog> {
               if (_useCustom) ...[
                 const Divider(),
                 Text(
-                  'Custom tag',
+                  l10n.addTagDialogCustomTag,
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _customController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter custom tag name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: l10n.addTagDialogCustomNameHint,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ],
@@ -212,16 +214,16 @@ class _AddTagDialogState extends State<AddTagDialog> {
                 const SizedBox(height: 8),
                 if (_selected != null)
                   Text(
-                    'Tag: ${_selected!.tagName} (${_selected!.group})',
+                    l10n.addTagDialogTagLabel(_selected!.tagName, _selected!.group),
                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _valueController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter tag value',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: InputDecoration(
+                    hintText: l10n.addTagDialogValueHint,
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   ),
                   autofocus: true,
                   onSubmitted: (_) => _onAdd(),
@@ -236,14 +238,14 @@ class _AddTagDialogState extends State<AddTagDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: (_selected != null || (_useCustom && _customController.text.trim().isNotEmpty))
                         ? _onAdd
                         : null,
-                    child: const Text('Add'),
+                    child: Text(l10n.addTag),
                   ),
                 ],
               ),

@@ -21,7 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/loaded_file.dart';
+import '../utils/constants.dart';
 import 'image_preview.dart';
 
 class FileListPanel extends StatefulWidget {
@@ -112,11 +114,11 @@ class _FileListPanelState extends State<FileListPanel> {
           ),
           child: Row(
             children: [
-              Icon(Icons.folder, size: 16, color: theme.colorScheme.onSurfaceVariant),
+              Icon(Icons.folder, size: 20, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${widget.files.length} file${widget.files.length == 1 ? '' : 's'}',
+                  AppLocalizations.of(context)!.fileCount(widget.files.length),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -125,7 +127,7 @@ class _FileListPanelState extends State<FileListPanel> {
                 ),
               ),
               Text(
-                '${widget.selectedIndices.length} selected',
+                AppLocalizations.of(context)!.selectedCount(widget.selectedIndices.length),
                 style: TextStyle(
                   fontSize: 11,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -169,19 +171,19 @@ class _FileListPanelState extends State<FileListPanel> {
                     children: [
                       if (file.isLoading)
                         SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                            strokeWidth: 2.5,
                             color: theme.colorScheme.primary,
                           ),
                         )
                       else if (file.hasError)
-                        Icon(Icons.error_outline, size: 16, color: theme.colorScheme.error)
+                        Icon(Icons.error_outline, size: 20, color: theme.colorScheme.error)
                       else if (file.isLoaded)
-                        Icon(Icons.check_circle_outline, size: 16, color: theme.colorScheme.primary)
+                        Icon(Icons.check_circle_outline, size: 20, color: theme.colorScheme.primary)
                       else
-                        Icon(Icons.insert_drive_file, size: 16, color: theme.colorScheme.outline),
+                        Icon(Icons.insert_drive_file, size: 20, color: theme.colorScheme.outline),
                       const SizedBox(width: 8),
                       Expanded(
                         child: isRenaming
@@ -234,7 +236,7 @@ class _FileListPanelState extends State<FileListPanel> {
                           onTap: () => widget.onRemove!(index),
                           child: Icon(
                             Icons.close,
-                            size: 16,
+                            size: 20,
                             color: isSelected
                                 ? theme.colorScheme.onPrimaryContainer
                                 : theme.colorScheme.outline,
@@ -249,7 +251,7 @@ class _FileListPanelState extends State<FileListPanel> {
         ),
 
         // Preview panel
-        if (singleSelectedPath != null)
+        if (Constants.kEnableImagePreview && singleSelectedPath != null)
           Container(
             decoration: BoxDecoration(
               border: Border(
@@ -264,10 +266,10 @@ class _FileListPanelState extends State<FileListPanel> {
                   color: theme.colorScheme.surfaceContainerHighest,
                   child: Row(
                     children: [
-                      Icon(Icons.preview, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                      Icon(Icons.preview, size: 18, color: theme.colorScheme.onSurfaceVariant),
                       const SizedBox(width: 6),
                       Text(
-                        'Preview',
+                        AppLocalizations.of(context)!.preview,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

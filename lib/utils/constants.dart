@@ -20,6 +20,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+import '../config/read_only_tags.dart' as ro;
+import '../config/type_specific/png_tags.dart' as png;
+import '../config/type_specific/jfif_tags.dart' as jfif;
+import '../config/type_specific/gif_tags.dart' as gif;
+import '../config/type_specific/bmp_tags.dart' as bmp;
+import '../config/type_specific/tiff_tags.dart' as tiff;
+import '../config/type_specific/riff_tags.dart' as riff;
+import '../config/type_specific/webp_tags.dart' as webp;
+import '../config/type_specific/heic_tags.dart' as heic;
+
 class Constants {
   static const String defaultCommands = '-fast -G -t -m -q -H';
   static const String appName = 'DragExif';
@@ -34,4 +45,100 @@ class Constants {
   static const String originalCopyright = 'Copyright © 2023-2025, Dương Diệu Pháp';
   static const String originalLicense = 'GNU General Public License v3.0 (GPLv3)';
   static const String thisProjectLicense = 'GNU General Public License v3.0 (GPLv3)';
+
+  // Cached sets for O(1) lookup — built once on first use.
+  static final Set<String> _generalGroups = ro.general['groups']!.toSet();
+  static final Set<String> _generalTags = ro.general['tags']!.toSet();
+
+  static bool isReadOnlyExifTag(String group, String tagName) {
+    if (_generalGroups.contains(group)) return true;
+    if (_generalTags.contains(tagName)) return true;
+
+    return switch (group) {
+      'PNG' => png.pngReadOnlyTags.contains(tagName),
+      'JFIF' => jfif.jfifReadOnlyTags.contains(tagName),
+      'GIF' => gif.gifReadOnlyTags.contains(tagName),
+      'BMP' => bmp.bmpReadOnlyTags.contains(tagName),
+      'TIFF' => tiff.tiffReadOnlyTags.contains(tagName),
+      'RIFF' => riff.riffReadOnlyTags.contains(tagName),
+      'WEBP' => webp.webpReadOnlyTags.contains(tagName),
+      'HEIC' || 'HEIF' => heic.heicReadOnlyTags.contains(tagName),
+      _ => false,
+    };
+  }
+
+  // ── Image format support ──
+  static const List<String> supportedImageExtensions = [
+    // Common raster
+    'jpg', 'jpeg', 'png', 'tiff', 'tif', 'gif', 'bmp', 'webp', 'ico',
+    'heic', 'heif', 'avif', 'jxl',
+    // RAW — Canon
+    'cr2', 'cr3', 'crw',
+    // RAW — Nikon
+    'nef', 'nrw',
+    // RAW — Sony
+    'arw', 'srf', 'sr2',
+    // RAW — Adobe / generic
+    'dng', 'raw',
+    // RAW — Olympus
+    'orf',
+    // RAW — Panasonic / Leica
+    'rw2', 'rwl',
+    // RAW — Fujifilm
+    'raf',
+    // RAW — Pentax
+    'pef', 'ptx',
+    // RAW — Sigma
+    'x3f',
+    // RAW — Minolta / Konica
+    'mrw',
+    // RAW — Kodak
+    'kdc', 'k25', 'dcr',
+    // RAW — Mamiya
+    'mos',
+    // RAW — Phase One
+    'iiq',
+    // RAW — Hasselblad
+    '3fr',
+    // RAW — Epson
+    'erf',
+    // RAW — Mamiya / Leaf
+    'mef',
+    // RAW — Samsung
+    'srw',
+    // RAW — Other
+    'bay', 'cap', 'cin', 'cs1', 'drf', 'fff', 'iq', 'mdc', 'obm', 'qtk',
+    // Photoshop / layered
+    'psd', 'psb',
+    // JPEG 2000
+    'jp2', 'j2k', 'jpf', 'jpx', 'jpm', 'mj2',
+    // Other common formats
+    'tga', 'pcx', 'pnm', 'pbm', 'pgm', 'ppm', 'pfm', 'xbm', 'xpm', 'wbmp',
+    // HDR / EXR
+    'exr', 'hdr', 'pic',
+    // SVG (rarely has EXIF, but possible)
+    'svg', 'svgz',
+  ];
+
+  /// Formats that Flutter's [Image.file] can actually decode for preview.
+  static const List<String> previewableImageExtensions = [
+    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',
+    'tiff', 'tif', 'ico', 'wbmp', 'heic', 'heif',
+  ];
+
+  /// Images larger than this will not be auto-previewed (user must click).
+  static const int maxAutoPreviewSizeBytes = 10 * 1024 * 1024; // 10 MB
+
+  static bool isSupportedImage(String path) {
+    final ext = path.toLowerCase().split('.').lastOrNull;
+    return ext != null && supportedImageExtensions.contains(ext);
+  }
+
+  static bool isPreviewableImage(String path) {
+    final ext = path.toLowerCase().split('.').lastOrNull;
+    return ext != null && previewableImageExtensions.contains(ext);
+  }
+
+  /// Toggle to disable image preview for performance testing.
+  static const bool kEnableImagePreview = true;
 }

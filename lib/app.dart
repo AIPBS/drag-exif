@@ -19,9 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'generated/app_localizations.dart';
 import 'screens/main_screen.dart';
-import 'services/settings_service.dart';
+import 'utils/locale_notifier.dart';
 
 class DragExifApp extends StatefulWidget {
   const DragExifApp({super.key});
@@ -31,17 +33,29 @@ class DragExifApp extends StatefulWidget {
 }
 
 class _DragExifAppState extends State<DragExifApp> {
-  final _settings = SettingsService();
-
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _settingsNotifier,
-      builder: (context, _) {
-        return MaterialApp(
-          title: 'DragExif',
-          debugShowCheckedModeBanner: false,
-          themeMode: _themeMode,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeModeNotifier,
+      builder: (context, themeMode, _) {
+        return ValueListenableBuilder<Locale?>(
+          valueListenable: localeNotifier,
+          builder: (context, locale, _) {
+            return MaterialApp(
+              title: 'DragExif',
+              debugShowCheckedModeBanner: false,
+              themeMode: themeMode,
+              locale: locale,
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           theme: FlexThemeData.light(
             scheme: FlexScheme.blueWhale,
             useMaterial3: true,
@@ -72,23 +86,7 @@ class _DragExifAppState extends State<DragExifApp> {
         );
       },
     );
+      },
+    );
   }
-
-  ThemeMode get _themeMode {
-    switch (_settings.themeMode) {
-      case 1:
-        return ThemeMode.dark;
-      case 2:
-        return ThemeMode.light;
-      default:
-        return ThemeMode.system;
-    }
-  }
-}
-
-// Simple notifier to trigger rebuilds when settings change
-final _settingsNotifier = _SettingsNotifier();
-
-class _SettingsNotifier extends ChangeNotifier {
-  void notify() => notifyListeners();
 }

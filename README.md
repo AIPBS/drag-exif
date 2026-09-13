@@ -1,10 +1,29 @@
 # DragExif
 
+**English | [中文](readmes/README_zh.md)**
+
 A standalone EXIF metadata viewer powered by ExifTool, built with Flutter.
 
 ## About
 
-DragExif is a cross-platform desktop application for viewing EXIF metadata from image files. It is based on [ExifGlass](https://github.com/d2phap/ExifGlass) by Dương Diệu Pháp, originally written in C# with Avalonia UI. This project is a Flutter/Dart rewrite that brings the same functionality to Linux, Windows, and macOS.
+DragExif is a cross-platform desktop application for viewing and editing EXIF metadata from image files. It is based on [ExifGlass](https://github.com/d2phap/ExifGlass) by Dương Diệu Pháp, originally written in C# with Avalonia UI. This project is a Flutter/Dart rewrite that brings the same functionality to Linux, Windows, and macOS.
+
+## Features
+
+- View EXIF, IPTC, XMP, and GPS metadata
+- Drag and drop files to load
+- Multi-select file list (Ctrl / Shift click)
+- Inline editing of tag values
+- Add new tags from a searchable catalog
+- Undo / Redo support (Ctrl+Z)
+- Save changes to files (Ctrl+S)
+- Export metadata to Text, CSV, or JSON
+- Copy metadata to clipboard
+- Image preview panel
+
+## Language
+
+The application supports **English** and **Chinese (中文)**. Switch languages in **Settings → Language**, or let it follow your system default.
 
 ## Original Project
 

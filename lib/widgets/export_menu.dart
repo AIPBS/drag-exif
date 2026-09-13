@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_item.dart';
 import '../utils/exporters.dart';
 
@@ -35,31 +36,32 @@ class ExportMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<ExportFileType>(
-      tooltip: 'Export as…',
+      tooltip: l10n.exportAs,
       onSelected: (type) => _export(context, type),
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: ExportFileType.text,
-          child: Text('Text file…'),
+          child: Text(l10n.exportText),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: ExportFileType.csv,
-          child: Text('CSV file…'),
+          child: Text(l10n.exportCsv),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: ExportFileType.json,
-          child: Text('JSON file…'),
+          child: Text(l10n.exportJson),
         ),
       ],
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Export as…'),
-            SizedBox(width: 4),
-            Icon(Icons.arrow_drop_down, size: 18),
+            Text(l10n.exportAs),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_drop_down, size: 18),
           ],
         ),
       ),

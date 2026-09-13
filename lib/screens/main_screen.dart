@@ -20,14 +20,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+import 'dart:developer';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_item.dart';
 import '../models/loaded_file.dart';
 import '../services/exif_tool_service.dart';
@@ -57,9 +61,20 @@ class _UndoEntry {
   _UndoEntry({required this.key, this.previousValue, this.wasNewTag = false});
 }
 
+class SaveIntent extends Intent {
+  const SaveIntent();
+}
+
+class UndoIntent extends Intent {
+  const UndoIntent();
+}
+
 class _MainScreenState extends State<MainScreen> with WindowListener {
   final _exifTool = ExifToolService();
   final _settings = SettingsService();
+
+  /// 0 = Home, 1 = Settings (rightmost as required by project conventions).
+  int _currentTab = 0;
 
   // All loaded files
   final List<LoadedFile> _allFiles = [];
@@ -86,13 +101,37 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   bool _dragging = false;
   double _leftPanelWidth = 260;
 
+  // ── Perceived-performance: file-switching guard ──
+  // When true the right panel shows a lightweight spinner instead of the
+  // heavy EditableExifDataTable. This keeps the frame that updates the
+  // file-list highlight fast (<16 ms) so the highlight feels instant.
+  bool _isSwitchingFile = false;
+  int _rebuildGeneration = 0;
+
+  final _tableKey = GlobalKey<EditableExifDataTableState>();
+
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
-    _initWindow();
+    // Defer window config to after the first frame — _initWindow uses
+    // AppLocalizations.of(context) which requires the widget tree to be built.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initWindow());
     _checkExifToolOnStartup();
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    if (kDebugMode) {
+      WidgetsBinding.instance.addTimingsCallback(_onFrameTimings);
+    }
+  }
+
+  void _onFrameTimings(List<FrameTiming> timings) {
+    for (final timing in timings) {
+      final buildMs = timing.buildDuration.inMilliseconds;
+      final rasterMs = timing.rasterDuration.inMilliseconds;
+      if (buildMs > 16 || rasterMs > 16) {
+        log('Slow frame — build: ${buildMs}ms, raster: ${rasterMs}ms',
+            name: 'dragexif.perf');
+      }
+    }
   }
 
   Future<void> _checkExifToolOnStartup() async {
@@ -105,37 +144,35 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   }
 
   Future<void> _initWindow() async {
-    await windowManager.setTitle('${Constants.appName} v1.0.0');
+    await windowManager.setTitle(AppLocalizations.of(context)?.windowTitle ?? Constants.appName);
     await windowManager.setMinimumSize(const Size(700, 500));
     await windowManager.setPreventClose(true);
   }
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     windowManager.removeListener(this);
     _exifTool.dispose();
     super.dispose();
   }
 
-  bool _handleKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return false;
-    final isCtrl = HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed;
-
-    if (event.logicalKey == LogicalKeyboardKey.keyS && isCtrl) {
-      if (_pendingEdits.isNotEmpty) {
-        _saveChanges();
+  
+  Future<void> _handleSave() async {
+    if (kDebugMode) {
+      log('User pressed Ctrl+S', name: 'dragexif.user');
+    }
+    // If the user is mid-edit in the table, finish that edit first
+    _tableKey.currentState?.finishEditing();
+    if (_pendingEdits.isNotEmpty) {
+      if (kDebugMode) {
+        log('Saving ${_pendingEdits.length} pending edits...', name: 'dragexif.user');
       }
-      return true;
+      await _saveChanges();
+    } else {
+      if (kDebugMode) {
+        log('Ctrl+S: no pending edits to save', name: 'dragexif.user');
+      }
     }
-
-    if (event.logicalKey == LogicalKeyboardKey.keyZ && isCtrl) {
-      _undo();
-      return true;
-    }
-
-    return false;
   }
 
   MergedTagItem? _findMergedTagItem(String key) {
@@ -190,11 +227,18 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   @override
   void onWindowMove() => _saveWindowState();
 
+  bool _isClosing = false;
+
   @override
   void onWindowClose() async {
+    if (_isClosing) return;
+    _isClosing = true;
     final canClose = await _handleUnsavedChangesBeforeAction();
     if (canClose) {
-      await windowManager.destroy();
+      await windowManager.setPreventClose(false);
+      await windowManager.close();
+    } else {
+      _isClosing = false;
     }
   }
 
@@ -214,6 +258,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // ──────────────────────────────────────────────────────────
 
   Future<void> _onSelectFile(int index, {bool ctrl = false, bool shift = false}) async {
+    if (kDebugMode) {
+      log('User clicked file: ${_allFiles[index].fileName} (#$index)', name: 'dragexif.user');
+    }
     if (_pendingEdits.isNotEmpty) {
       final action = await UnsavedChangesDialog.show(
         context,
@@ -232,7 +279,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       }
     }
 
+    final generation = ++_rebuildGeneration;
+
     setState(() {
+      _isSwitchingFile = true;
       if (shift && _lastClickedIndex != null) {
         final start = _lastClickedIndex!;
         final end = index;
@@ -256,12 +306,20 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _lastClickedIndex = index;
     });
 
-    _rebuildMergedView();
+    // Defer the heavy EXIF table rebuild so the highlight frame stays fast.
+    Future.delayed(Duration.zero, () {
+      if (_rebuildGeneration != generation) return; // stale click
+      _rebuildMergedView();
+    });
   }
 
   void _rebuildMergedView() {
     if (_selectedIndices.isEmpty) {
-      setState(() => _mergedItems = {});
+      setState(() {
+        _mergedItems = {};
+        _displayItems = {};
+        _isSwitchingFile = false;
+      });
       return;
     }
 
@@ -273,8 +331,22 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       }
     }
 
+    final merged = selectedTags.isEmpty
+        ? <String, List<MergedTagItem>>{}
+        : MergedTagItem.mergeFiles(selectedTags);
+
+    final display = <String, List<MergedTagItem>>{};
+    for (final entry in merged.entries) {
+      display[entry.key] = List.from(entry.value);
+    }
+    for (final entry in _newTags.entries) {
+      display.putIfAbsent(entry.key, () => []).addAll(entry.value);
+    }
+
     setState(() {
-      _mergedItems = selectedTags.isEmpty ? {} : MergedTagItem.mergeFiles(selectedTags);
+      _mergedItems = merged;
+      _displayItems = display;
+      _isSwitchingFile = false;
     });
   }
 
@@ -325,7 +397,8 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _lastClickedIndex = 0;
     }
 
-    await windowManager.setTitle('${Constants.appName} v1.0.0 - ${_allFiles.length} files');
+    if (!mounted) return;
+    await windowManager.setTitle(AppLocalizations.of(context)!.windowTitleWithCount(_allFiles.length));
 
     // Verify ExifTool
     final exifToolResolved = await ExifToolService.checkExifToolExists(_settings.exifToolExecutable);
@@ -340,7 +413,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       return;
     }
 
-    _exifTool.exifToolPath = _settings.exifToolExecutable;
+    _exifTool.exifToolPath = exifToolResolved;
 
     // Load EXIF for all files in parallel
     final args = _settings.exifToolArguments.isNotEmpty
@@ -518,6 +591,15 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         _isLoading = false;
       });
 
+      if (kDebugMode) {
+        log('Save completed successfully', name: 'dragexif.user');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.changesSaved)),
+        );
+      }
+
       // Reload EXIF for affected files
       final args = _settings.exifToolArguments.isNotEmpty
           ? _settings.exifToolArguments.split(' ')
@@ -528,6 +610,14 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       _rebuildMergedView();
 
     } catch (e) {
+      if (kDebugMode) {
+        log('SAVE FAILED: $e', name: 'dragexif.user');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
+        );
+      }
       setState(() => _isLoading = false);
     }
   }
@@ -577,11 +667,11 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // ──────────────────────────────────────────────────────────
 
   Future<void> _pickFiles() async {
-    const typeGroup = XTypeGroup(
-      label: 'Images',
-      extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'raw', 'cr2', 'nef', 'arw', 'dng', 'heic', 'webp', 'gif', 'bmp'],
+    final typeGroup = XTypeGroup(
+      label: AppLocalizations.of(context)!.filePickerImages,
+      extensions: Constants.supportedImageExtensions,
     );
-    final files = await openFiles(acceptedTypeGroups: [typeGroup, const XTypeGroup(label: 'All files')]);
+    final files = await openFiles(acceptedTypeGroups: [typeGroup]);
     if (files.isNotEmpty) {
       await _loadFiles(files.map((f) => f.path).toList());
     }
@@ -591,16 +681,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Clipboard / Export
   // ──────────────────────────────────────────────────────────
 
-  Map<String, List<MergedTagItem>> get _displayItems {
-    final result = <String, List<MergedTagItem>>{};
-    for (final entry in _mergedItems.entries) {
-      result[entry.key] = List.from(entry.value);
-    }
-    for (final entry in _newTags.entries) {
-      result.putIfAbsent(entry.key, () => []).addAll(entry.value);
-    }
-    return result;
-  }
+  Map<String, List<MergedTagItem>> _displayItems = {};
 
   Future<void> _showAddTagDialog() async {
     if (_selectedIndices.isEmpty) return;
@@ -610,6 +691,20 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
 
     // Normalize XMP sub-groups for display (XMP-dc, XMP-xmp, etc. → XMP)
     final displayGroup = result.group.startsWith('XMP-') ? 'XMP' : result.group;
+
+    // Block adding tags to read-only groups / tags
+    if (Constants.isReadOnlyExifTag(displayGroup, result.tagName)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.cannotAddReadOnlyTag(result.tagName, displayGroup)),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     final key = '$displayGroup||${result.tagName}';
     _undoStack.add(_UndoEntry(
       key: key,
@@ -673,22 +768,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Settings / About
   // ──────────────────────────────────────────────────────────
 
-  Future<void> _showSettings() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (_) => const SettingsScreen(),
-    );
-    if (result == true && _allFiles.isNotEmpty) {
-      final args = _settings.exifToolArguments.isNotEmpty
-          ? _settings.exifToolArguments.split(' ')
-          : <String>[];
-      await Future.wait(
-        List.generate(_allFiles.length, (i) => _loadExifForIndex(i, args)),
-      );
-      _rebuildMergedView();
-    }
-  }
-
   Future<void> _showAbout() async {
     await showDialog(
       context: context,
@@ -700,218 +779,277 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   // Build
   // ──────────────────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
+  // Toggle to false to test if the right-side panel is causing lag
+  static const bool _kShowRightPanel = true;
+
+  Widget _buildBody(BuildContext context) {
     final hasChanges = _pendingEdits.isNotEmpty;
     final selectedCount = _selectedIndices.length;
 
-    return Scaffold(
-      body: DropTarget(
-        onDragEntered: (_) => setState(() => _dragging = true),
-        onDragExited: (_) => setState(() => _dragging = false),
-        onDragDone: (detail) async {
-          setState(() => _dragging = false);
-          final files = <String>[];
-          for (final file in detail.files) {
-            final path = file.path;
-            if (path.isNotEmpty) {
-              final stat = FileStat.statSync(path);
-              if (stat.type != FileSystemEntityType.directory) {
-                files.add(path);
-              }
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _dragging = true),
+      onDragExited: (_) => setState(() => _dragging = false),
+      onDragDone: (detail) async {
+        setState(() => _dragging = false);
+        final files = <String>[];
+        for (final file in detail.files) {
+          final path = file.path;
+          if (path.isNotEmpty) {
+            final stat = FileStat.statSync(path);
+            if (stat.type != FileSystemEntityType.directory &&
+                Constants.isSupportedImage(path)) {
+              files.add(path);
             }
           }
-          if (files.isNotEmpty) {
-            await _loadFiles(files);
-          }
-        },
-        child: Container(
-          color: _dragging
-              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
-              : null,
-          child: Row(
-            children: [
-              // ── Left: File list panel ──
-              SizedBox(
-                width: _leftPanelWidth,
-                child: FileListPanel(
-                  files: _allFiles,
-                  selectedIndices: _selectedIndices,
-                  lastClickedIndex: _lastClickedIndex,
-                  onSelect: _onSelectFile,
-                  onRemove: _removeFile,
-                  onRename: _renameFile,
-                ),
+        }
+        if (files.isNotEmpty) {
+          await _loadFiles(files);
+        }
+      },
+      child: Container(
+        color: _dragging
+            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+            : null,
+        child: Row(
+          children: [
+            // ── Left: File list panel ──
+            SizedBox(
+              width: _leftPanelWidth,
+              child: FileListPanel(
+                files: _allFiles,
+                selectedIndices: _selectedIndices,
+                lastClickedIndex: _lastClickedIndex,
+                onSelect: _onSelectFile,
+                onRemove: _removeFile,
+                onRename: _renameFile,
               ),
+            ),
 
-              // Draggable splitter
-              MouseRegion(
-                cursor: SystemMouseCursors.resizeLeftRight,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onHorizontalDragUpdate: (details) {
-                    setState(() {
-                      _leftPanelWidth += details.delta.dx;
-                      _leftPanelWidth = _leftPanelWidth.clamp(150.0, 500.0);
-                    });
-                  },
-                  child: SizedBox(
-                    width: 8,
-                    child: Center(
-                      child: VerticalDivider(
-                        width: 1,
-                        color: Theme.of(context).dividerColor,
-                      ),
+            // Draggable splitter
+            MouseRegion(
+              cursor: SystemMouseCursors.resizeLeftRight,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragUpdate: (details) {
+                  setState(() {
+                    _leftPanelWidth += details.delta.dx;
+                    _leftPanelWidth = _leftPanelWidth.clamp(150.0, 500.0);
+                  });
+                },
+                child: SizedBox(
+                  width: 8,
+                  child: Center(
+                    child: VerticalDivider(
+                      width: 1,
+                      color: Theme.of(context).dividerColor,
                     ),
                   ),
                 ),
               ),
+            ),
 
-              // ── Right: Main content ──
+            // ── Right: Main content ──
+            if (_kShowRightPanel)
               Expanded(
                 child: Column(
-                  children: [
-                    // Unsaved changes banner
-                    if (hasChanges)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        color: Theme.of(context).colorScheme.errorContainer,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.warning_amber,
-                              color: Theme.of(context).colorScheme.onErrorContainer,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Unsaved changes (${_pendingEdits.length} ${_pendingEdits.length == 1 ? 'field' : 'fields'})',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onErrorContainer,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                children: [
+                  // Unsaved changes banner
+                  if (hasChanges)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: Theme.of(context).colorScheme.onErrorContainer,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              AppLocalizations.of(context)!.unsavedChangesBanner(_pendingEdits.length),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextButton(
-                              onPressed: _cancelChanges,
-                              child: const Text('Discard'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: _saveChanges,
-                              child: const Text('Save'),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // Main content area
-                    Expanded(
-                      child: _error.isNotEmpty && _allFiles.isEmpty
-                          ? ErrorDisplay(error: _error, details: _errorDetails)
-                          : _allFiles.isEmpty && !_isLoading
-                              ? const Center(child: Text('Drop image files or click "Open files…"'))
-                              : _isLoading && _mergedItems.isEmpty
-                                  ? const Center(child: CircularProgressIndicator())
-                                  : selectedCount == 0
-                                      ? const Center(child: Text('Select a file to view EXIF data'))
-                                      : _displayItems.isEmpty
-                                          ? const Center(child: Text('No EXIF data for selected files'))
-                                          : EditableExifDataTable(
-                                              groupedItems: _displayItems,
-                                              showIndex: _settings.showColumnIndex,
-                                              showTagId: _settings.showColumnTagId,
-                                              showTagName: _settings.showColumnTagName,
-                                              showTagValue: _settings.showColumnTagValue,
-                                              onEdit: _onEdit,
-                                            ),
-                    ),
-
-                    // Footer
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                FilledButton.icon(
-                                  onPressed: _pickFiles,
-                                  icon: const Icon(Icons.folder_open, size: 18),
-                                  label: const Text('Open files…'),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton.icon(
-                                  onPressed: _displayItems.isEmpty ? null : _copySelected,
-                                  icon: const Icon(Icons.copy, size: 18),
-                                  label: const Text('Copy'),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton.icon(
-                                  onPressed: _selectedIndices.isEmpty ? null : _showAddTagDialog,
-                                  icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('Add tag'),
-                                ),
-                                const SizedBox(width: 8),
-                                ExportMenu(
-                                  items: _exportItems,
-                                  defaultFileName: selectedCount > 0
-                                      ? '${_allFiles[_selectedIndices.first].fileName.split('.').first}_exif'
-                                      : null,
-                                ),
-                                const SizedBox(width: 24),
-                                PopupMenuButton<String>(
-                                  tooltip: 'Menu',
-                                  onSelected: (value) async {
-                                    switch (value) {
-                                      case 'settings':
-                                        await _showSettings();
-                                      case 'about':
-                                        await _showAbout();
-                                      case 'exit':
-                                        final canClose = await _handleUnsavedChangesBeforeAction();
-                                        if (canClose) await windowManager.close();
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(value: 'settings', child: Text('Settings…')),
-                                    const PopupMenuDivider(),
-                                    const PopupMenuItem(value: 'about', child: Text('About…')),
-                                    const PopupMenuDivider(),
-                                    const PopupMenuItem(value: 'exit', child: Text('Exit')),
-                                  ],
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 12),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('Menu'),
-                                        SizedBox(width: 4),
-                                        Icon(Icons.arrow_drop_down, size: 18),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          ),
+                          TextButton(
+                            onPressed: _cancelChanges,
+                            child: Text(AppLocalizations.of(context)!.discard),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _saveChanges,
+                            child: Text(AppLocalizations.of(context)!.save),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+
+                  // Main content area
+                  Expanded(
+                    child: _error.isNotEmpty && _allFiles.isEmpty
+                        ? ErrorDisplay(error: _error, details: _errorDetails)
+                        : _allFiles.isEmpty && !_isLoading
+                            ? Center(child: Text(AppLocalizations.of(context)!.dropFilesHint))
+                            : _isLoading && _mergedItems.isEmpty
+                                ? const Center(child: CircularProgressIndicator())
+                                : selectedCount == 0
+                                    ? Center(child: Text(AppLocalizations.of(context)!.selectFileHint))
+                                    : _isSwitchingFile
+                                        ? Container(
+                                            alignment: Alignment.center,
+                                            child: const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            ),
+                                          )
+                                        : _displayItems.isEmpty
+                                            ? Center(child: Text(AppLocalizations.of(context)!.noExifData))
+                                            : EditableExifDataTable(
+                                                key: _tableKey,
+                                                groupedItems: _displayItems,
+                                                showIndex: _settings.showColumnIndex,
+                                                showTagId: _settings.showColumnTagId,
+                                                showTagName: _settings.showColumnTagName,
+                                                showTagValue: _settings.showColumnTagValue,
+                                                onEdit: _onEdit,
+                                              ),
+                  ),
+
+                  // Footer
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      border: Border(
+                        top: BorderSide(color: Theme.of(context).dividerColor),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              FilledButton.icon(
+                                onPressed: _pickFiles,
+                                icon: const Icon(Icons.folder_open, size: 18),
+                                label: Text(AppLocalizations.of(context)!.openFiles),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: _displayItems.isEmpty ? null : _copySelected,
+                                icon: const Icon(Icons.copy, size: 18),
+                                label: Text(AppLocalizations.of(context)!.copy),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: _selectedIndices.isEmpty ? null : _showAddTagDialog,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: Text(AppLocalizations.of(context)!.addTag),
+                              ),
+                              const SizedBox(width: 8),
+                              ExportMenu(
+                                items: _exportItems,
+                                defaultFileName: selectedCount > 0
+                                    ? '${_allFiles[_selectedIndices.first].fileName.split('.').first}_exif'
+                                    : null,
+                              ),
+                              const SizedBox(width: 24),
+                              PopupMenuButton<String>(
+                                tooltip: AppLocalizations.of(context)!.menu,
+                                onSelected: (value) async {
+                                  switch (value) {
+                                    case 'about':
+                                      await _showAbout();
+                                    case 'exit':
+                                      final canClose = await _handleUnsavedChangesBeforeAction();
+                                      if (canClose) await windowManager.close();
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(value: 'about', child: Text(AppLocalizations.of(context)!.menuAbout)),
+                                  PopupMenuItem(value: 'exit', child: Text(AppLocalizations.of(context)!.menuExit)),
+                                ],
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(AppLocalizations.of(context)!.menu),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_drop_down, size: 18),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.keyS, control: true): SaveIntent(),
+        SingleActivator(LogicalKeyboardKey.keyS, meta: true): SaveIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, control: true): UndoIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, meta: true): UndoIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          SaveIntent: CallbackAction<SaveIntent>(
+            onInvoke: (_) => _handleSave(),
+          ),
+          UndoIntent: CallbackAction<UndoIntent>(
+            onInvoke: (_) => _undo(),
+          ),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            body: IndexedStack(
+              index: _currentTab,
+              children: [
+                _buildBody(context),
+                const SettingsPage(),
+              ],
+            ),
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: _currentTab,
+              onDestinationSelected: (index) {
+                setState(() => _currentTab = index);
+              },
+              destinations: [
+                NavigationDestination(
+                  icon: const Icon(Icons.home_outlined),
+                  selectedIcon: const Icon(Icons.home),
+                  label: AppLocalizations.of(context)!.tabHome,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: AppLocalizations.of(context)!.settings,
+                ),
+              ],
+            ),
           ),
         ),
       ),

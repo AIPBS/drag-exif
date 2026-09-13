@@ -18,11 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import 'dart:developer';
+
 import 'package:data_table_2/data_table_2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../generated/app_localizations.dart';
 import '../models/exif_tag_item.dart' show MergedTagItem;
+import '../utils/constants.dart';
 
 class EditableExifDataTable extends StatefulWidget {
   final Map<String, List<MergedTagItem>> groupedItems;
@@ -43,18 +48,36 @@ class EditableExifDataTable extends StatefulWidget {
   });
 
   @override
-  State<EditableExifDataTable> createState() => _EditableExifDataTableState();
+  State<EditableExifDataTable> createState() => EditableExifDataTableState();
 }
 
-class _EditableExifDataTableState extends State<EditableExifDataTable> {
+class EditableExifDataTableState extends State<EditableExifDataTable> {
   int? _editingIndex;
   String? _editingGroup;
+  MergedTagItem? _editingItem;
   final _editController = TextEditingController();
+  List<DataColumn2>? _cachedColumns;
+  static const double _rowHeight = 48;
+  static const double _headerHeight = 56;
+  static final _pendingRowColor = WidgetStateProperty.all(
+    Colors.blue.withValues(alpha: 0.12),
+  );
 
   @override
   void dispose() {
     _editController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant EditableExifDataTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showIndex != widget.showIndex ||
+        oldWidget.showTagId != widget.showTagId ||
+        oldWidget.showTagName != widget.showTagName ||
+        oldWidget.showTagValue != widget.showTagValue) {
+      _cachedColumns = null;
+    }
   }
 
   @override
@@ -71,13 +94,15 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
           initiallyExpanded: true,
           title: Text(
             groupName,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
           ),
-          subtitle: Text('${groupItems.length} tags'),
+          subtitle: Text(AppLocalizations.of(context)!.tagCount(groupItems.length)),
           children: [
             SizedBox(
-              height: groupItems.length * 52.0 + 56,
+              height: groupItems.length * _rowHeight + _headerHeight,
               child: DataTable2(
+                dataRowHeight: _rowHeight,
+                headingRowHeight: _headerHeight,
                 columnSpacing: 12,
                 horizontalMargin: 12,
                 minWidth: 600,
@@ -94,29 +119,32 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
   }
 
   List<DataColumn2> _buildColumns() {
+    return _cachedColumns ??= _createColumns();
+  }
+
+  List<DataColumn2> _createColumns() {
     final columns = <DataColumn2>[];
+    const headerStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
+    final l10n = AppLocalizations.of(context)!;
     if (widget.showIndex) {
-      columns.add(DataColumn2(size: ColumnSize.S, label: const Text('')));
+      columns.add(const DataColumn2(size: ColumnSize.S, label: Text('', style: headerStyle)));
     }
     if (widget.showTagId) {
-      columns.add(DataColumn2(size: ColumnSize.S, label: const Text('Tag ID')));
+      columns.add(DataColumn2(size: ColumnSize.S, label: Text(l10n.columnTagId, style: headerStyle)));
     }
     if (widget.showTagName) {
-      columns.add(DataColumn2(size: ColumnSize.M, label: const Text('Tag Name')));
+      columns.add(DataColumn2(size: ColumnSize.M, label: Text(l10n.columnTagName, style: headerStyle)));
     }
     if (widget.showTagValue) {
-      columns.add(DataColumn2(size: ColumnSize.L, label: const Text('Value')));
+      columns.add(DataColumn2(size: ColumnSize.L, label: Text(l10n.columnValue, style: headerStyle)));
     }
     // Action column (delete)
-    columns.add(const DataColumn2(size: ColumnSize.S, label: Text('')));
+    columns.add(const DataColumn2(size: ColumnSize.S, label: Text('', style: headerStyle)));
     return columns;
   }
 
-  /// Groups that contain read-only file-system derived tags.
-  static const _readOnlyGroups = {'File', 'ICC_Profile'};
-
   bool _isReadOnly(MergedTagItem item) =>
-      _readOnlyGroups.contains(item.tagGroup);
+      Constants.isReadOnlyExifTag(item.tagGroup, item.tagName);
 
   void _showReadOnlyNotice(MergedTagItem item) {
     // read-only notice removed per user request
@@ -132,11 +160,12 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
 
     final cells = <DataCell>[];
 
+    const cellStyle = TextStyle(fontSize: 14);
     if (widget.showIndex) {
-      cells.add(DataCell(Text('${index + 1}')));
+      cells.add(DataCell(Text('${index + 1}', style: cellStyle)));
     }
     if (widget.showTagId) {
-      cells.add(DataCell(Text(item.tagId)));
+      cells.add(DataCell(Text(item.tagId, style: cellStyle)));
     }
     if (widget.showTagName) {
       cells.add(
@@ -147,6 +176,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
             child: Text(
               item.tagName,
               overflow: TextOverflow.ellipsis,
+              style: cellStyle,
             ),
           ),
         ),
@@ -157,20 +187,30 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
         cells.add(
           DataCell(
             SizedBox.expand(
-              child: TextField(
-                controller: _editController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  border: InputBorder.none,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Transform.translate(
+                  offset: const Offset(0, -1),
+                  child: TextField(
+                    controller: _editController,
+                    autofocus: true,
+                    style: cellStyle.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (value) {
+                      _finishEdit(item, value);
+                    },
+                    onTapOutside: (_) {
+                      _finishEdit(item, _editController.text);
+                    },
+                  ),
                 ),
-                onSubmitted: (value) {
-                  _finishEdit(item, value);
-                },
-                onTapOutside: (_) {
-                  _finishEdit(item, _editController.text);
-                },
               ),
             ),
           ),
@@ -180,19 +220,19 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
           DataCell(
             SizedBox.expand(
               child: InkWell(
+                mouseCursor: SystemMouseCursors.forbidden,
                 onTap: () => _showReadOnlyNotice(item),
                 onDoubleTap: () => _showValueDialog(item),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Tooltip(
-                    message: displayValue,
-                    waitDuration: const Duration(milliseconds: 300),
+                    message: AppLocalizations.of(context)!.cannotBeEdited,
                     child: Text(
                       displayValue,
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
-                      style: TextStyle(
+                      style: cellStyle.copyWith(
                         color: isUnequal
                             ? Theme.of(context).colorScheme.error
                             : hasPending
@@ -225,7 +265,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
-                      style: TextStyle(
+                      style: cellStyle.copyWith(
                         color: isMarkedForDeletion
                             ? Theme.of(context).colorScheme.error
                             : isUnequal
@@ -261,7 +301,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.delete_outline,
-                      size: 16,
+                      size: 20,
                       color: Colors.grey,
                     ),
                   ),
@@ -272,11 +312,7 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
 
     return DataRow2(
       cells: cells,
-      color: hasPending
-          ? WidgetStateProperty.all(
-              Colors.blue.withValues(alpha: 0.12),
-            )
-          : null,
+      color: hasPending ? _pendingRowColor : null,
     );
   }
 
@@ -294,11 +330,11 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
               Clipboard.setData(ClipboardData(text: item.currentValue));
               Navigator.of(context).pop();
             },
-            child: const Text('Copy'),
+            child: Text(AppLocalizations.of(context)!.copy),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(AppLocalizations.of(context)!.close),
           ),
         ],
       ),
@@ -306,17 +342,29 @@ class _EditableExifDataTableState extends State<EditableExifDataTable> {
   }
 
   void _startEdit(MergedTagItem item, String groupName, int index) {
+    if (kDebugMode) {
+      log('User clicked field to edit: ${item.tagGroup}:${item.tagName}', name: 'dragexif.user');
+    }
     setState(() {
       _editingGroup = groupName;
       _editingIndex = index;
+      _editingItem = item;
       _editController.text = item.isUnequal ? '' : item.currentValue;
     });
+  }
+
+  /// Finish the current inline edit and commit the value.
+  void finishEditing() {
+    if (_editingItem != null) {
+      _finishEdit(_editingItem!, _editController.text);
+    }
   }
 
   void _finishEdit(MergedTagItem item, String value) {
     setState(() {
       _editingGroup = null;
       _editingIndex = null;
+      _editingItem = null;
     });
     // Only register an edit if the value actually changed
     if (value != item.currentValue) {
