@@ -3,8 +3,8 @@
 
 store_submission:
   entra:
-    tenant_id: ""
-    client_id: ""
+    tenant_id: "4ef6929a-7f6b-4df5-9f40-342d72feaee3"
+    client_id: "9067bfcf-a493-4b76-9676-8ef9e74fb88c"
   partner_center:
     seller_id: ""
     store_app_id: ""
