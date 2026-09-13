@@ -1,0 +1,15 @@
+# Public Microsoft Store submission identifiers.
+# Fill these values after completing the Partner Center setup.
+
+store_submission:
+  entra:
+    tenant_id: ""
+    client_id: ""
+  partner_center:
+    seller_id: ""
+    store_app_id: ""
+
+# Secret value location:
+# GitHub repository -> Settings -> Secrets and variables -> Actions -> New repository secret
+# Name: STORE_CLIENT_SECRET
+# Do not put the client-secret value in this file.
