@@ -1,7 +1,7 @@
 name: dragexif
 description: A standalone EXIF metadata viewer powered by ExifTool.
 publish_to: 'none'
-version: 1.1.1
+version: 1.1.2
 
 environment:
   sdk: ^3.11.5
@@ -50,7 +50,7 @@ msix_config:
   display_name: Drag Exif
   publisher_display_name: AIPEAC
   identity_name: AIPEAC.DragExif
-  msix_version: 1.1.1.0
+  msix_version: 1.1.2.0
   logo_path: windows/runner/resources/app_icon.ico
   capabilities: internetClient
   execution_alias: dragexif
