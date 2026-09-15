@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.2+3 - 09-15-2026
+
+### Changed
+- Reduced CI build time by reusing the ExifTool archive and avoiding a second
+  Windows compilation during MSIX packaging.
+
 ## 1.0.2+2 - 09-15-2026
 
 ### Fixed

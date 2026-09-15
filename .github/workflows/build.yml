@@ -26,12 +26,6 @@ jobs:
           echo "dart=$DART_VERSION" >> $GITHUB_OUTPUT
           echo "flutter=$FLUTTER_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Cache Flutter SDK
-        uses: actions/cache@v4
-        with:
-          path: /opt/hostedtoolcache/flutter
-          key: flutter-${{ steps.flutter-version.outputs.flutter }}-${{ runner.os }}
-
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -79,12 +73,6 @@ jobs:
           echo "dart=$DART_VERSION" >> $GITHUB_OUTPUT
           echo "flutter=$FLUTTER_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Cache Flutter SDK
-        uses: actions/cache@v4
-        with:
-          path: C:\\hostedtoolcache\\flutter
-          key: flutter-${{ steps.flutter-version.outputs.flutter }}-${{ runner.os }}
-
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -95,6 +83,13 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Cache ExifTool archive
+        id: exiftool-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/exiftool-13.59-64.zip
+          key: exiftool-13.59-64-windows
+
       - name: Download ExifTool
         shell: pwsh
         run: |
@@ -104,7 +99,12 @@ jobs:
           $url = "https://oliverbetz.de/cms/files/Artikel/ExifTool-for-Windows/exiftool-${version}_64.zip"
           $expectedSha256 = '577257dd22baebe77157d905792d6ed2c5916cd03aa627f40b2175db12110ac6'
 
-          Invoke-WebRequest -Uri $url -OutFile $archive
+          if ('${{ steps.exiftool-cache.outputs.cache-hit }}' -ne 'true') {
+            Invoke-WebRequest -Uri $url -OutFile $archive
+          }
+          if (-not (Test-Path $archive)) {
+            throw 'The ExifTool archive was not available after cache/download.'
+          }
           $actualSha256 = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actualSha256 -ne $expectedSha256) {
             throw "ExifTool checksum mismatch: $actualSha256"
@@ -149,7 +149,7 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:STORE_PUBLISHER)) {
             throw 'STORE_PUBLISHER is required for the Store MSIX build.'
           }
-          flutter pub run msix:create --store --publisher "$env:STORE_PUBLISHER" --install-certificate false
+          flutter pub run msix:create --store --publisher "$env:STORE_PUBLISHER" --install-certificate false --build-windows false
 
       - name: Package Windows build
         run: |
