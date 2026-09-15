@@ -144,8 +144,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 Center(
                   child: Image.asset(
                     Theme.of(context).brightness == Brightness.dark
-                        ? 'assets/app_icon_v1.1.1.png'
-                        : 'assets/app_icon_v1.1.1_light.png',
+                        ? 'assets/app_icon_v1.1.0.png'
+                        : 'assets/app_icon_v1.1.0_light.png',
                     width: 240,
                     height: 120,
                     fit: BoxFit.contain,
