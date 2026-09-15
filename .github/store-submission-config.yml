@@ -12,4 +12,5 @@ store_submission:
 # Secret value location:
 # GitHub repository -> Settings -> Secrets and variables -> Actions -> New repository secret
 # Name: STORE_CLIENT_SECRET
-# Do not put the client-secret value in this file.
+# Name: STORE_PUBLISHER
+# Do not put either secret value in this file.

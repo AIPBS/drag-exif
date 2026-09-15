@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.2+2 - 09-15-2026
+
+### Fixed
+- Windows Store builds now bundle ExifTool and its required support files.
+- Store MSIX builds now use the configured Partner Center publisher identity.
+
 ## 1.0.2 - 06-03-2026
 
 ### Changed

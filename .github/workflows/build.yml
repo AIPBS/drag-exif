@@ -6,6 +6,7 @@ on:
     paths:
       - 'lib/**'
       - 'pubspec.yaml'
+      - 'windows/**'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [main]
@@ -94,20 +95,61 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Download ExifTool
+        shell: pwsh
+        run: |
+          $version = '13.59'
+          $archive = Join-Path $env:RUNNER_TEMP "exiftool-$version-64.zip"
+          $extract = Join-Path $env:RUNNER_TEMP "exiftool-$version-64"
+          $url = "https://sourceforge.net/projects/exiftool/files/exiftool-${version}_64.zip/download"
+          $expectedSha256 = '44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec'
+
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          $actualSha256 = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSha256 -ne $expectedSha256) {
+            throw "ExifTool checksum mismatch: $actualSha256"
+          }
+
+          Expand-Archive -Path $archive -DestinationPath $extract -Force
+          $exifTool = Get-ChildItem -Path $extract -Filter 'exiftool(-k).exe' -Recurse | Select-Object -First 1
+          $exifToolFiles = Get-ChildItem -Path $extract -Directory -Filter 'exiftool_files' -Recurse | Select-Object -First 1
+          if ($null -eq $exifTool -or $null -eq $exifToolFiles) {
+            throw 'The ExifTool archive did not contain the expected executable and support directory.'
+          }
+
+          $bundle = Join-Path $PWD 'windows/runner/exiftool'
+          New-Item -ItemType Directory -Path $bundle -Force | Out-Null
+          Copy-Item $exifTool.FullName (Join-Path $bundle 'exiftool.exe') -Force
+          Copy-Item $exifToolFiles.FullName (Join-Path $bundle 'exiftool_files') -Recurse -Force
+
       - name: Build Windows (release)
         run: flutter build windows --release
 
       - name: Stage MSIX build
         run: |
           # Build already outputs to build/windows/x64/runner/Release/
-          # Just verify the directory exists before MSIX packaging
           if (-not (Test-Path "build/windows/x64/runner/Release/dragexif.exe")) {
             Write-Host "dragexif.exe not found in build/windows/x64/runner/Release/" -ForegroundColor Red
             exit 1
           }
+          if (-not (Test-Path "build/windows/x64/runner/Release/exiftool.exe")) {
+            Write-Host "exiftool.exe not found in the Windows bundle" -ForegroundColor Red
+            exit 1
+          }
+          if (-not (Test-Path "build/windows/x64/runner/Release/exiftool_files")) {
+            Write-Host "exiftool_files not found in the Windows bundle" -ForegroundColor Red
+            exit 1
+          }
 
       - name: Build MSIX
-        run: flutter pub run msix:create
+        if: github.event_name == 'push'
+        env:
+          STORE_PUBLISHER: ${{ secrets.STORE_PUBLISHER }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:STORE_PUBLISHER)) {
+            throw 'STORE_PUBLISHER is required for the Store MSIX build.'
+          }
+          flutter pub run msix:create --store --publisher "$env:STORE_PUBLISHER" --install-certificate false
 
       - name: Package Windows build
         run: |
@@ -122,6 +164,7 @@ jobs:
 
       - name: Upload MSIX artifact
         uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
         with:
           name: dragexif-msix
           path: build/windows/x64/runner/Release/dragexif.msix

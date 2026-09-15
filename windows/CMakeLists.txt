@@ -72,6 +72,9 @@ endif()
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 
+# ExifTool is downloaded by CI and bundled beside the application executable.
+set(EXIFTOOL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/runner/exiftool")
+
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 
@@ -80,6 +83,15 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
+
+if(EXISTS "${EXIFTOOL_DIR}/exiftool.exe")
+  install(FILES "${EXIFTOOL_DIR}/exiftool.exe"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+  install(DIRECTORY "${EXIFTOOL_DIR}/exiftool_files/"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}/exiftool_files"
+    COMPONENT Runtime)
+endif()
 
 if(PLUGIN_BUNDLED_LIBRARIES)
   install(FILES "${PLUGIN_BUNDLED_LIBRARIES}"
