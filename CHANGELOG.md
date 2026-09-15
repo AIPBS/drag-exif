@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## 1.1.2 - 09-15-2026
+## 1.1.3 - 09-15-2026
 
 ### Fixed
 - Windows Store packaging now declares the renamed `Drag Exif.exe` executable

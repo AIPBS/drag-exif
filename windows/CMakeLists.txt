@@ -4,7 +4,11 @@ project(dragexif LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "Drag Exif")
+# msix reads this compatibility declaration to determine the packaged filename.
+# The real CMake target remains stable because CMake target references cannot
+# use the spaced user-facing filename unquoted.
+# set(BINARY_NAME "Drag Exif")
+set(BINARY_NAME "dragexif")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -51,6 +55,10 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
+
+# Keep the CMake target identifier stable while using the user-facing executable name.
+set_target_properties(${BINARY_NAME} PROPERTIES OUTPUT_NAME "Drag Exif")
+
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
