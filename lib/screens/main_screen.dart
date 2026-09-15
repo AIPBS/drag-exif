@@ -20,6 +20,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
@@ -114,6 +115,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   void initState() {
     super.initState();
     windowManager.addListener(this);
+    if (Platform.isWindows) {
+      HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    }
     // Defer window config to after the first frame — _initWindow uses
     // AppLocalizations.of(context) which requires the widget tree to be built.
     WidgetsBinding.instance.addPostFrameCallback((_) => _initWindow());
@@ -151,6 +155,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
 
   @override
   void dispose() {
+    if (Platform.isWindows) {
+      HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    }
     windowManager.removeListener(this);
     _exifTool.dispose();
     super.dispose();
@@ -173,6 +180,18 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         log('Ctrl+S: no pending edits to save', name: 'dragexif.user');
       }
     }
+  }
+
+  bool _handleKeyEvent(KeyEvent event) {
+    if (!Platform.isWindows || event is! KeyDownEvent) return false;
+
+    if (event.logicalKey == LogicalKeyboardKey.keyS &&
+        HardwareKeyboard.instance.isControlPressed) {
+      unawaited(_handleSave());
+      return true;
+    }
+
+    return false;
   }
 
   MergedTagItem? _findMergedTagItem(String key) {

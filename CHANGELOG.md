@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.2+4 - 09-15-2026
+
+### Fixed
+- Windows Ctrl+S now reaches the save handler while an inline metadata field
+  has focus.
+
 ## 1.0.2+3 - 09-15-2026
 
 ### Changed
