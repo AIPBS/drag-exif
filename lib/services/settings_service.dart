@@ -42,7 +42,7 @@ class SettingsService {
   bool isMaximized = false;
 
   // App settings
-  int themeMode = 0; // 0 = system, 1 = dark, 2 = light
+  int themeMode = 1; // 0 = system, 1 = dark, 2 = light
   bool enableWindowTopMost = false;
   String locale = ''; // '' = system default, 'en', 'zh'
 

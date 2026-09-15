@@ -2,7 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
-## 1.0.2+4 - 09-15-2026
+## 1.1.0 - 09-15-2026
+
+### Added
+- Theme-aware app branding in Settings using separate dark and light icons.
+- About is now available from Settings.
+
+### Changed
+- Updated the new icons.
+- New installations default to the dark theme.
+- Removed the footer menu and separate Exit action; close the app with the
+  window close button.
+
+## 1.0.3 - 09-15-2026
 
 ### Fixed
 - Windows Ctrl+S now reaches the save handler while an inline metadata field

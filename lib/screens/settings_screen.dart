@@ -27,6 +27,7 @@ import '../generated/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../utils/constants.dart';
 import '../utils/locale_notifier.dart';
+import 'about_screen.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -119,6 +120,13 @@ class _SettingsPageState extends State<SettingsPage> {
     _settings.save();
   }
 
+  Future<void> _showAbout() async {
+    await showDialog(
+      context: context,
+      builder: (_) => const AboutScreen(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -133,6 +141,18 @@ class _SettingsPageState extends State<SettingsPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Image.asset(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? 'assets/app_icon_v1.1.0.png'
+                        : 'assets/app_icon_v1.1.0_light.png',
+                    width: 240,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
                 // ── Appearance ──
                 Text(
                   l10n.appTheme,
@@ -227,6 +247,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                     ),
                   ),
+                ),
+                const SizedBox(height: 24),
+
+                Text(
+                  l10n.about,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.info_outline),
+                  title: Text(l10n.about),
+                  onTap: _showAbout,
                 ),
               ],
             ),

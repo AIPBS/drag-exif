@@ -45,7 +45,6 @@ import '../widgets/export_menu.dart';
 import '../widgets/file_list_panel.dart';
 import '../widgets/add_tag_dialog.dart';
 import '../widgets/unsaved_changes_dialog.dart';
-import 'about_screen.dart';
 import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -784,17 +783,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   }
 
   // ──────────────────────────────────────────────────────────
-  // Settings / About
-  // ──────────────────────────────────────────────────────────
-
-  Future<void> _showAbout() async {
-    await showDialog(
-      context: context,
-      builder: (_) => const AboutScreen(),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────────
   // Build
   // ──────────────────────────────────────────────────────────
 
@@ -979,34 +967,6 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                 defaultFileName: selectedCount > 0
                                     ? '${_allFiles[_selectedIndices.first].fileName.split('.').first}_exif'
                                     : null,
-                              ),
-                              const SizedBox(width: 24),
-                              PopupMenuButton<String>(
-                                tooltip: AppLocalizations.of(context)!.menu,
-                                onSelected: (value) async {
-                                  switch (value) {
-                                    case 'about':
-                                      await _showAbout();
-                                    case 'exit':
-                                      final canClose = await _handleUnsavedChangesBeforeAction();
-                                      if (canClose) await windowManager.close();
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(value: 'about', child: Text(AppLocalizations.of(context)!.menuAbout)),
-                                  PopupMenuItem(value: 'exit', child: Text(AppLocalizations.of(context)!.menuExit)),
-                                ],
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(AppLocalizations.of(context)!.menu),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.arrow_drop_down, size: 18),
-                                    ],
-                                  ),
-                                ),
                               ),
                             ],
                           ),

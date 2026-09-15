@@ -3,13 +3,8 @@
   "tabHome": "Home",
   "appTitle": "DragExif",
   "appSubtitle": "EXIF metadata viewer",
-  "windowTitle": "DragExif v1.0.0",
-  "windowTitleWithCount": "DragExif v1.0.0 - {count} files",
-
-  "menu": "Menu",
-  "menuSettings": "Settings…",
-  "menuAbout": "About…",
-  "menuExit": "Exit",
+  "windowTitle": "DragExif v1.1.0",
+  "windowTitleWithCount": "DragExif v1.1.0 - {count} files",
 
   "openFiles": "Open files…",
   "copy": "Copy",

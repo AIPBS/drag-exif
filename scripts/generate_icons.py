@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-# write your icon name here
+# Source icon name follows the versioned asset convention.
 # ----------------------------
 
-icon_name = "app_icon_v0.1.2.svg"
+icon_name = "app_icon_v1.1.0.png"
 
 # ----------------------------
 
@@ -18,16 +18,19 @@ from gi.repository import Rsvg, GdkPixbuf
 
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SVG = os.path.join(BASE, 'assets', icon_name)
+SOURCE = os.path.join(BASE, 'assets', icon_name)
 WIN_DIR = os.path.join(BASE, 'windows', 'runner', 'resources')
 LIN_DIR = os.path.join(BASE, 'linux', 'runner', 'icons')
 MAC_DIR = os.path.join(BASE, 'macos', 'Runner', 'Assets.xcassets', 'AppIcon.appiconset')
 SIZES = [16, 32, 48, 64, 128, 256, 512]
 
 
-def render(svg_path, out_path, size):
-    handle = Rsvg.Handle.new_from_file(svg_path)
-    pixbuf = handle.get_pixbuf()
+def render(source_path, out_path, size):
+    if source_path.lower().endswith('.svg'):
+        handle = Rsvg.Handle.new_from_file(source_path)
+        pixbuf = handle.get_pixbuf()
+    else:
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file(source_path)
     scaled = pixbuf.scale_simple(size, size, GdkPixbuf.InterpType.BILINEAR)
     scaled.savev(out_path, 'png', [], [])
     print(f"  {size}x{size} -> {out_path}")
@@ -50,8 +53,8 @@ def make_ico(png_paths, out_path):
 
 
 def main():
-    if not os.path.exists(SVG):
-        print(f"SVG not found: {SVG}")
+    if not os.path.exists(SOURCE):
+        print(f"Icon source not found: {SOURCE}")
         sys.exit(1)
 
     print("Generating icons...")
@@ -62,7 +65,7 @@ def main():
     pngs = []
     for size in SIZES:
         p = os.path.join(WIN_DIR, f'app_icon_{size}.png')
-        render(SVG, p, size)
+        render(SOURCE, p, size)
         pngs.append(p)
 
     make_ico(pngs, os.path.join(WIN_DIR, 'app_icon.ico'))
@@ -88,7 +91,7 @@ def main():
             with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
                 fdst.write(fsrc.read())
         else:
-            render(SVG, dst, size)
+            render(SOURCE, dst, size)
         print(f"  {size}x{size} -> macos/")
 
     print("Done.")

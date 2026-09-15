@@ -128,30 +128,6 @@ abstract class AppLocalizations {
   /// **'DragExif v1.0.0 - {count} files'**
   String windowTitleWithCount(Object count);
 
-  /// No description provided for @menu.
-  ///
-  /// In en, this message translates to:
-  /// **'Menu'**
-  String get menu;
-
-  /// No description provided for @menuSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings…'**
-  String get menuSettings;
-
-  /// No description provided for @menuAbout.
-  ///
-  /// In en, this message translates to:
-  /// **'About…'**
-  String get menuAbout;
-
-  /// No description provided for @menuExit.
-  ///
-  /// In en, this message translates to:
-  /// **'Exit'**
-  String get menuExit;
-
   /// No description provided for @openFiles.
   ///
   /// In en, this message translates to:

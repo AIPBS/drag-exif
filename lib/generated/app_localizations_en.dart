@@ -18,24 +18,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appSubtitle => 'EXIF metadata viewer';
 
   @override
-  String get windowTitle => 'DragExif v1.0.0';
+  String get windowTitle => 'DragExif v1.1.0';
 
   @override
   String windowTitleWithCount(Object count) {
-    return 'DragExif v1.0.0 - $count files';
+    return 'DragExif v1.1.0 - $count files';
   }
-
-  @override
-  String get menu => 'Menu';
-
-  @override
-  String get menuSettings => 'Settings…';
-
-  @override
-  String get menuAbout => 'About…';
-
-  @override
-  String get menuExit => 'Exit';
 
   @override
   String get openFiles => 'Open files…';

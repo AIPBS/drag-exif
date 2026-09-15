@@ -18,24 +18,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appSubtitle => 'EXIF 元数据查看器';
 
   @override
-  String get windowTitle => '图像 EXIF 编辑器 v1.0.0';
+  String get windowTitle => '图像 EXIF 编辑器 v1.1.0';
 
   @override
   String windowTitleWithCount(Object count) {
-    return '图像 EXIF 编辑器 v1.0.0 - $count 个文件';
+    return '图像 EXIF 编辑器 v1.1.0 - $count 个文件';
   }
-
-  @override
-  String get menu => '菜单';
-
-  @override
-  String get menuSettings => '设置…';
-
-  @override
-  String get menuAbout => '关于…';
-
-  @override
-  String get menuExit => '退出';
 
   @override
   String get openFiles => '打开文件…';

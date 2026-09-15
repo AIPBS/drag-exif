@@ -3,13 +3,8 @@
   "tabHome": "首页",
   "appTitle": "图像 EXIF 编辑器",
   "appSubtitle": "EXIF 元数据查看器",
-  "windowTitle": "图像 EXIF 编辑器 v1.0.0",
-  "windowTitleWithCount": "图像 EXIF 编辑器 v1.0.0 - {count} 个文件",
-
-  "menu": "菜单",
-  "menuSettings": "设置…",
-  "menuAbout": "关于…",
-  "menuExit": "退出",
+  "windowTitle": "图像 EXIF 编辑器 v1.1.0",
+  "windowTitleWithCount": "图像 EXIF 编辑器 v1.1.0 - {count} 个文件",
 
   "openFiles": "打开文件…",
   "copy": "复制",
