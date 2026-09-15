@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.1.1 - 09-15-2026
+
+### Added
+- Renamed the user-facing executable to `Drag Exif` on Windows and Linux.
+
+### Changed
+- Updated the Windows and Linux executable metadata to `Drag Exif`.
+
 ## 1.1.0 - 09-15-2026
 
 ### Added

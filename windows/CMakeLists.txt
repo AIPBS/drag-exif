@@ -52,6 +52,9 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 
+# Keep the CMake target identifier stable while using the user-facing executable name.
+set_target_properties(${BINARY_NAME} PROPERTIES OUTPUT_NAME "Drag Exif")
+
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.

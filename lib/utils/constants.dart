@@ -33,7 +33,7 @@ import '../config/type_specific/heic_tags.dart' as heic;
 
 class Constants {
   static const String defaultCommands = '-fast -G -t -m -q -H';
-  static const String appName = 'DragExif';
+  static const String appName = 'Drag Exif';
   static const String configFileName = 'config.json';
   static const String updateUrl =
       'https://raw.githubusercontent.com/d2phap/ExifGlass/main/update.json';

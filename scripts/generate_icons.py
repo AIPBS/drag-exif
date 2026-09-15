@@ -3,7 +3,7 @@
 # Source icon name follows the versioned asset convention.
 # ----------------------------
 
-icon_name = "app_icon_v1.1.0.png"
+icon_name = "app_icon_v1.1.1.png"
 
 # ----------------------------
 

@@ -1,10 +1,10 @@
 {
   "@@locale": "en",
   "tabHome": "Home",
-  "appTitle": "DragExif",
+  "appTitle": "Drag Exif",
   "appSubtitle": "EXIF metadata viewer",
-  "windowTitle": "DragExif v1.1.0",
-  "windowTitleWithCount": "DragExif v1.1.0 - {count} files",
+  "windowTitle": "Drag Exif v1.1.1",
+  "windowTitleWithCount": "Drag Exif v1.1.1 - {count} files",
 
   "openFiles": "Open files…",
   "copy": "Copy",

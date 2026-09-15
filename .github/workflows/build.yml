@@ -128,8 +128,8 @@ jobs:
       - name: Stage MSIX build
         run: |
           # Build already outputs to build/windows/x64/runner/Release/
-          if (-not (Test-Path "build/windows/x64/runner/Release/dragexif.exe")) {
-            Write-Host "dragexif.exe not found in build/windows/x64/runner/Release/" -ForegroundColor Red
+          if (-not (Test-Path "build/windows/x64/runner/Release/Drag Exif.exe")) {
+            Write-Host "Drag Exif.exe not found in build/windows/x64/runner/Release/" -ForegroundColor Red
             exit 1
           }
           if (-not (Test-Path "build/windows/x64/runner/Release/exiftool.exe")) {

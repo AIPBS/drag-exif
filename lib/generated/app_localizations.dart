@@ -107,7 +107,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'DragExif'**
+  /// **'Drag Exif'**
   String get appTitle;
 
   /// No description provided for @appSubtitle.
@@ -119,13 +119,13 @@ abstract class AppLocalizations {
   /// No description provided for @windowTitle.
   ///
   /// In en, this message translates to:
-  /// **'DragExif v1.0.0'**
+  /// **'Drag Exif v1.1.1'**
   String get windowTitle;
 
   /// No description provided for @windowTitleWithCount.
   ///
   /// In en, this message translates to:
-  /// **'DragExif v1.0.0 - {count} files'**
+  /// **'Drag Exif v1.1.1 - {count} files'**
   String windowTitleWithCount(Object count);
 
   /// No description provided for @openFiles.

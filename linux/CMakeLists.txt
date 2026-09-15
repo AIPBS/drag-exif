@@ -57,6 +57,12 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 
+# Keep the CMake target identifier stable while using the user-facing executable name.
+set_target_properties(${BINARY_NAME}
+  PROPERTIES
+  OUTPUT_NAME "Drag Exif"
+)
+
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
 

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "exifglass_dart" "\0"
+            VALUE "CompanyName", "AIPEAC" "\0"
+            VALUE "FileDescription", "Drag Exif" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "exifglass_dart" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "exifglass_dart.exe" "\0"
-            VALUE "ProductName", "exifglass_dart" "\0"
+            VALUE "InternalName", "Drag Exif" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 AIPEAC. All rights reserved." "\0"
+            VALUE "OriginalFilename", "Drag Exif.exe" "\0"
+            VALUE "ProductName", "Drag Exif" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

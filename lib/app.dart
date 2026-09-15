@@ -42,7 +42,7 @@ class _DragExifAppState extends State<DragExifApp> {
           valueListenable: localeNotifier,
           builder: (context, locale, _) {
             return MaterialApp(
-              title: 'DragExif',
+              title: 'Drag Exif',
               debugShowCheckedModeBanner: false,
               themeMode: themeMode,
               locale: locale,
