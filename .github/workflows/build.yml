@@ -101,8 +101,8 @@ jobs:
           $version = '13.59'
           $archive = Join-Path $env:RUNNER_TEMP "exiftool-$version-64.zip"
           $extract = Join-Path $env:RUNNER_TEMP "exiftool-$version-64"
-          $url = "https://sourceforge.net/projects/exiftool/files/exiftool-${version}_64.zip/download"
-          $expectedSha256 = '44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec'
+          $url = "https://oliverbetz.de/cms/files/Artikel/ExifTool-for-Windows/exiftool-${version}_64.zip"
+          $expectedSha256 = '577257dd22baebe77157d905792d6ed2c5916cd03aa627f40b2175db12110ac6'
 
           Invoke-WebRequest -Uri $url -OutFile $archive
           $actualSha256 = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -111,7 +111,7 @@ jobs:
           }
 
           Expand-Archive -Path $archive -DestinationPath $extract -Force
-          $exifTool = Get-ChildItem -Path $extract -Filter 'exiftool(-k).exe' -Recurse | Select-Object -First 1
+          $exifTool = Get-ChildItem -Path $extract -Filter 'ExifTool.exe' -Recurse | Select-Object -First 1
           $exifToolFiles = Get-ChildItem -Path $extract -Directory -Filter 'exiftool_files' -Recurse | Select-Object -First 1
           if ($null -eq $exifTool -or $null -eq $exifToolFiles) {
             throw 'The ExifTool archive did not contain the expected executable and support directory.'
