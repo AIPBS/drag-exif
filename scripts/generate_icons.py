@@ -28,7 +28,7 @@ SIZES = [16, 32, 48, 64, 128, 256, 512]
 def render(source_path, out_path, size):
     if source_path.lower().endswith('.svg'):
         handle = Rsvg.Handle.new_from_file(source_path)
-        pixbuf = handle.get_pixbuf()
+        pixbuf = handle.get_pixbuf_and_error()
     else:
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(source_path)
     scaled = pixbuf.scale_simple(size, size, GdkPixbuf.InterpType.BILINEAR)
