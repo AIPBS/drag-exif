@@ -2,10 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
-## 1.2.0 - 09-18-2026
+## 1.2.1 - 09-18-2026
 
 ### Changed
 - Updated the app and Microsoft Store branding to the new v1.2.0 SVG icons.
+- MSIX packaging uses the generated high-resolution PNG derived from the SVG
+  source because the MSIX tool cannot read SVG logo files directly.
 
 ## 1.1.3 - 09-15-2026
 
