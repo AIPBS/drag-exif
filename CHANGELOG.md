@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.2.0 - 09-18-2026
+
+### Changed
+- Updated the app and Microsoft Store branding to the new v1.2.0 SVG icons.
+
 ## 1.1.3 - 09-15-2026
 
 ### Fixed

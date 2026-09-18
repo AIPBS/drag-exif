@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../generated/app_localizations.dart';
 import '../services/settings_service.dart';
@@ -142,10 +143,10 @@ class _SettingsPageState extends State<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
-                  child: Image.asset(
+                  child: SvgPicture.asset(
                     Theme.of(context).brightness == Brightness.dark
-                        ? 'assets/app_icon_v1.1.0.png'
-                        : 'assets/app_icon_v1.1.0_light.png',
+                        ? 'assets/app_icon_v1.2.0.svg'
+                        : 'assets/app_icon_v1.2.0_light.svg',
                     width: 240,
                     height: 120,
                     fit: BoxFit.contain,
