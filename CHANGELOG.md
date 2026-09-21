@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.1 - 09-21-2026
+
+### Fixed
+- Standalone packaging removes host Perl symlinks and rejects unsafe archive
+  entries before publishing.
+
 ## 1.3.0 - 09-21-2026
 
 ### Added

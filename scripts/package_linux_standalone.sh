@@ -45,7 +45,7 @@ for source_dir in "${perl_dirs[@]}"; do
   relative_dir="${source_dir#/}"
   destination="$perl_root/$relative_dir"
   mkdir -p "$(dirname "$destination")"
-  cp -a "$source_dir" "$destination"
+  cp -aL "$source_dir" "$destination"
   perl5lib="$perl5lib\$dir/perl-root/$relative_dir:"
 done
 
@@ -75,3 +75,16 @@ chmod +x "$exiftool_root/exiftool" "$exiftool_root/perl" "$exiftool_root/exiftoo
 "$exiftool_root/exiftool" -ver | grep -Fx '13.59'
 mkdir -p "$(dirname "$output")"
 tar -czf "$output" -C "$standalone_root" bundle/
+
+python3 - "$output" <<'PY'
+import sys
+import tarfile
+
+archive_path = sys.argv[1]
+with tarfile.open(archive_path, 'r:gz') as archive:
+    for member in archive.getmembers():
+        if member.issym() or member.islnk():
+            raise SystemExit(f'archive contains a symlink: {member.name}')
+        if member.name.startswith('/') or '/..' in member.name:
+            raise SystemExit(f'archive contains an unsafe path: {member.name}')
+PY
