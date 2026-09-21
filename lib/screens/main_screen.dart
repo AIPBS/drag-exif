@@ -749,6 +749,8 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       );
       _newTags.putIfAbsent(displayGroup, () => []).add(newItem);
     });
+
+    _rebuildMergedView();
   }
 
   Future<void> _copySelected() async {

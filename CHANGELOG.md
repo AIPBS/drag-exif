@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.2 - 09-21-2026
+
+### Fixed
+- Removed the stale version suffix from the window title.
+- Newly added metadata tags now appear immediately as unsaved changes instead
+  of waiting for Ctrl+S.
+
 ## 1.3.1 - 09-21-2026
 
 ### Fixed
