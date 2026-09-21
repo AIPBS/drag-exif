@@ -2,15 +2,15 @@
 
 **[English](../README.md) | 中文**
 
-基于 ExifTool 的独立 EXIF 元数据查看器，使用 Flutter 构建。
+- 基于 ExifTool 的独立 EXIF 元数据查看器，使用 Flutter 构建。
 
 ## 注意事项
 
-应用界面支持中文，但 XMP/EXIF 元数据本身的标签名称是英文，目前尚未汉化。
+- 应用界面支持中文，但 XMP/EXIF 元数据本身的标签名称是英文，目前尚未汉化。
 
 ## 关于
 
-图像 EXIF 编辑器（DragExif）是一款跨平台桌面应用程序，用于查看和编辑图像文件的 EXIF 元数据。它基于 Dương Diệu Pháp 的 [ExifGlass](https://github.com/d2phap/ExifGlass)（原使用 C# 和 Avalonia UI 编写）。本项目是 Flutter/Dart 重写版，为 Linux，Windows 和 macOS 提供相同的功能。
+- 图像 EXIF 编辑器（DragExif）是一款跨平台桌面应用程序，用于查看和编辑图像文件的 EXIF 元数据。它基于 Dương Diệu Pháp 的 [ExifGlass](https://github.com/d2phap/ExifGlass)（原使用 C# 和 Avalonia UI 编写）。本项目是 Flutter/Dart 重写版，为 Linux，Windows 和 macOS 提供相同的功能。
 
 ## 下载与安装
 
@@ -18,27 +18,21 @@
 
 ### Windows
 
-你可以从 [Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) 免费安装，也可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
-
-### Flatpak
-
-```sh
-flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
-flatpak --user install dragexif com.aipeac.dragexif
-```
-
-> 这是 DragExif 项目自行维护的 Flatpak 远程仓库，不是 Flathub。仓库中的
-> 打包文件和签名流程均为开源内容。
+- 你可以从 [Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) 免费安装，也可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
 
 ### Linux
 
-你可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
-
-> TODO：支持包管理器
+- 你可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载。
+- 你也可以从Flatpak下载.
+  > ```sh
+  > flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
+  > flatpak --user install dragexif com.aipeac.dragexif
+  > ```
+  > 这是 DragExif 项目自行维护的 Flatpak 远程仓库，不是 Flathub。仓库中的
+  > 打包文件和签名流程均为开源内容。
 
 ### macOS
-
-> TODO
+- TODO
 
 ## 功能
 
@@ -64,8 +58,8 @@ flatpak --user install dragexif com.aipeac.dragexif
 - **许可证：** GNU General Public License v3.0 (GPLv3)
 - **版权：** Copyright © 2023-2025, Dương Diệu Pháp
 
-DragExif 与原始项目使用相同的 GPLv3 许可证，符合许可证条款。
+- DragExif 与原始项目使用相同的 GPLv3 许可证，符合许可证条款。
 
 ## 许可证
 
-本项目根据 GNU 通用公共许可证 v3.0（GPLv3）获得许可。详情请参见 [LICENSE](LICENSE) 文件。
+- 本项目根据 GNU 通用公共许可证 v3.0（GPLv3）获得许可。详情请参见 [LICENSE](LICENSE) 文件。
