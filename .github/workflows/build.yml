@@ -193,8 +193,14 @@ jobs:
         run: |
           cd build/windows/x64/runner/Release
           7z a ../../../../../dragexif-windows.zip * -x!dragexif.msix
-          $msixInZip = 7z l ../../../../../dragexif-windows.zip | Select-String -SimpleMatch 'dragexif.msix'
-          if ($msixInZip) {
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead("../../../../../dragexif-windows.zip")
+          try {
+            $msixInZip = $zip.Entries | Where-Object FullName -eq 'dragexif.msix'
+          } finally {
+            $zip.Dispose()
+          }
+          if ($null -ne $msixInZip) {
             throw 'The portable Windows ZIP must not contain dragexif.msix.'
           }
 

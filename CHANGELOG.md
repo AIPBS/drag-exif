@@ -7,6 +7,8 @@ All notable changes to this project are documented in this file.
 ### Fixed
 - The portable Windows ZIP now excludes the separately published MSIX file,
   with a CI assertion that prevents it from returning.
+- The CI assertion now checks the ZIP entry exactly instead of matching broad
+  7-Zip output.
 
 ## 1.3.8+2 - 09-22-2026
 
