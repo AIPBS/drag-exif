@@ -8,6 +8,24 @@
 
 图像 EXIF 编辑器（DragExif）是一款跨平台桌面应用程序，用于查看和编辑图像文件的 EXIF 元数据。它基于 Dương Diệu Pháp 的 [ExifGlass](https://github.com/d2phap/ExifGlass)（原使用 C# 和 Avalonia UI 编写）。本项目是 Flutter/Dart 重写版，为 Linux，Windows 和 macOS 提供相同的功能。
 
+## 下载与安装
+
+[![从 Microsoft 获取](https://get.microsoft.com/images/zh-cn%20dark.svg)](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full)
+
+### Windows
+
+你可以从 [Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) 免费安装，也可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
+
+### Linux
+
+你可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
+
+> TODO：支持包管理器
+
+### macOS
+
+> TODO
+
 ## 功能
 
 - 查看 EXIF，IPTC，XMP 和 GPS 元数据
@@ -19,6 +37,10 @@
 - 保存更改到文件（Ctrl+S）
 - 导出元数据为文本、CSV 或 JSON）
 - 图像预览面板
+
+## 注意事项
+
+应用界面支持中文，但 XMP/EXIF 元数据本身的标签名称是英文，目前尚未汉化。
 
 ## 语言
 
