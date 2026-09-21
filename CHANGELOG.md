@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.7 - 09-22-2026
+
+### Fixed
+- Fixed the GitHub Pages Flatpak publishing workflow YAML.
+
 ## 1.3.6 - 09-22-2026
 
 ### Fixed

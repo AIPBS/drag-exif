@@ -363,14 +363,14 @@ jobs:
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repository="${GITHUB_REPOSITORY#*/}"
           cat > "$pages/flatpark.flatpakrepo" <<EOF
-[Flatpak Repo]
-Title=Drag Exif
-Url=https://${owner}.github.io/${repository}/repo
-Homepage=https://github.com/${GITHUB_REPOSITORY}
-Comment=Drag Exif Flatpak repository
-Description=Signed Flatpak releases of Drag Exif.
-GPGKey=${gpg_key}
-EOF
+          [Flatpak Repo]
+          Title=Drag Exif
+          Url=https://${owner}.github.io/${repository}/repo
+          Homepage=https://github.com/${GITHUB_REPOSITORY}
+          Comment=Drag Exif Flatpak repository
+          Description=Signed Flatpak releases of Drag Exif.
+          GPGKey=${gpg_key}
+          EOF
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
