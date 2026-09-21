@@ -14,6 +14,16 @@ DragExif is a cross-platform Flutter desktop application for viewing and editing
 ### Windows
 You can install the app for from **[Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) for free**, or downloaded it directly from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
 
+### Flatpak
+
+```sh
+flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
+flatpak --user install dragexif com.aipeac.dragexif
+```
+
+> This is a custom, project-maintained Flatpak remote, not Flathub. Its
+> packaging and signing workflow are open source in this repository.
+
 ### Linux
 You can install the app from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
 > TODO: package manager support

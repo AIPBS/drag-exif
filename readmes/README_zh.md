@@ -20,6 +20,16 @@
 
 你可以从 [Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) 免费安装，也可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
 
+### Flatpak
+
+```sh
+flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
+flatpak --user install dragexif com.aipeac.dragexif
+```
+
+> 这是 DragExif 项目自行维护的 Flatpak 远程仓库，不是 Flathub。仓库中的
+> 打包文件和签名流程均为开源内容。
+
 ### Linux
 
 你可以从 [Release 页面](https://github.com/AIPBS/drag-exif/releases/) 下载安装包。
