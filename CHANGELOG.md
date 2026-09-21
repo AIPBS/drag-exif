@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.8+3 - 09-22-2026
+
+### Fixed
+- The portable Windows ZIP now excludes the separately published MSIX file,
+  with a CI assertion that prevents it from returning.
+
 ## 1.3.8+2 - 09-22-2026
 
 ### Fixed
