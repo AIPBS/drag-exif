@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.8 - 09-22-2026
+
+### Fixed
+- The portable Windows ZIP no longer includes the separately published MSIX
+  installer.
+
 ## 1.3.7 - 09-22-2026
 
 ### Fixed
