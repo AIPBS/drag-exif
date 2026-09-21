@@ -100,6 +100,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   bool _isLoading = false;
   bool _dragging = false;
   double _leftPanelWidth = 260;
+  String? _notificationMessage;
+  bool _notificationIsError = false;
+  Timer? _notificationTimer;
   bool _windowReady = false;
   Timer? _windowStateSaveTimer;
   Future<void>? _windowStateSaveFuture;
@@ -118,6 +121,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   void initState() {
     super.initState();
     windowManager.addListener(this);
+    _leftPanelWidth = _settings.leftPanelWidth;
     if (Platform.isWindows) {
       HardwareKeyboard.instance.addHandler(_handleKeyEvent);
     }
@@ -163,6 +167,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
       HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     }
     _windowStateSaveTimer?.cancel();
+    _notificationTimer?.cancel();
     windowManager.removeListener(this);
     _exifTool.dispose();
     super.dispose();
@@ -650,18 +655,11 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         _pendingEdits.clear();
         _newTags.clear();
         _undoStack.clear();
-        _isLoading = false;
       });
 
       if (kDebugMode) {
         log('Save completed successfully', name: 'dragexif.user');
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.changesSaved)),
-        );
-      }
-
       // Reload EXIF for affected files
       final args = _settings.exifToolArguments.isNotEmpty
           ? _settings.exifToolArguments.split(' ')
@@ -670,17 +668,22 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
         _selectedIndices.map((idx) => _loadExifForIndex(idx, args)),
       );
       _rebuildMergedView();
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showNotification(AppLocalizations.of(context)!.changesSaved);
+      }
 
     } catch (e) {
       if (kDebugMode) {
         log('SAVE FAILED: $e', name: 'dragexif.user');
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.saveFailed(e.toString()))),
+        setState(() => _isLoading = false);
+        _showNotification(
+          AppLocalizations.of(context)!.saveFailed(e.toString()),
+          isError: true,
         );
       }
-      setState(() => _isLoading = false);
     }
   }
 
@@ -797,6 +800,18 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     _rebuildMergedView();
   }
 
+  void _showNotification(String message, {bool isError = false}) {
+    _notificationTimer?.cancel();
+    setState(() {
+      _notificationMessage = message;
+      _notificationIsError = isError;
+    });
+    _notificationTimer = Timer(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() => _notificationMessage = null);
+    });
+  }
+
   Future<void> _copySelected() async {
     final buffer = StringBuffer();
     final display = _displayItems;
@@ -839,7 +854,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     final hasChanges = _pendingEdits.isNotEmpty;
     final selectedCount = _selectedIndices.length;
 
-    return DropTarget(
+    return Stack(
+      children: [
+        DropTarget(
       onDragEntered: (_) => setState(() => _dragging = true),
       onDragExited: (_) => setState(() => _dragging = false),
       onDragDone: (detail) async {
@@ -859,7 +876,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
           await _loadFiles(files);
         }
       },
-      child: Container(
+          child: Container(
         color: _dragging
             ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
             : null,
@@ -888,6 +905,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                     _leftPanelWidth += details.delta.dx;
                     _leftPanelWidth = _leftPanelWidth.clamp(150.0, 500.0);
                   });
+                },
+                onHorizontalDragEnd: (_) {
+                  _settings.leftPanelWidth = _leftPanelWidth;
+                  unawaited(_settings.save());
                 },
                 child: SizedBox(
                   width: 8,
@@ -1021,6 +1042,58 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+          ),
+        ),
+        if (_notificationMessage != null)
+          Positioned(
+            right: 16,
+            bottom: 104,
+            child: IgnorePointer(
+              child: _buildNotification(context),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildNotification(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final background = _notificationIsError
+        ? theme.colorScheme.errorContainer
+        : isDark
+            ? const Color(0xff1b5e20)
+            : const Color(0xffe8f5e9);
+    final foreground = _notificationIsError
+        ? theme.colorScheme.onErrorContainer
+        : isDark
+            ? const Color(0xffe8f5e9)
+            : const Color(0xff1b5e20);
+
+    return Material(
+      color: background,
+      elevation: 5,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _notificationIsError ? Icons.error_outline : Icons.check_circle_outline,
+              color: foreground,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Text(
+                _notificationMessage!,
+                style: TextStyle(color: foreground),
               ),
             ),
           ],

@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.4 - 09-21-2026
+
+### Changed
+- Save notifications now use a compact, non-blocking bottom-right overlay.
+- The save success notification is shown only after the save and reload finish.
+
+### Fixed
+- The splitter position between the file list and metadata panel now persists.
+
 ## 1.3.3 - 09-21-2026
 
 ### Fixed

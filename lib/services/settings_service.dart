@@ -40,6 +40,7 @@ class SettingsService {
   int windowWidth = 900;
   int windowHeight = 700;
   bool isMaximized = false;
+  double leftPanelWidth = 260;
 
   // App settings
   int themeMode = 1; // 0 = system, 1 = dark, 2 = light
@@ -89,6 +90,7 @@ class SettingsService {
       windowWidth = json['windowWidth'] ?? windowWidth;
       windowHeight = json['windowHeight'] ?? windowHeight;
       isMaximized = json['isMaximized'] ?? isMaximized;
+      leftPanelWidth = (json['leftPanelWidth'] as num?)?.toDouble() ?? leftPanelWidth;
 
       exifToolExecutable = json['exifToolExecutable'] ?? exifToolExecutable;
       exifToolArguments = json['exifToolArguments'] ?? exifToolArguments;
@@ -103,6 +105,7 @@ class SettingsService {
       'windowWidth': windowWidth,
       'windowHeight': windowHeight,
       'isMaximized': isMaximized,
+      'leftPanelWidth': leftPanelWidth,
       'exifToolExecutable': exifToolExecutable,
       'exifToolArguments': exifToolArguments,
     };
