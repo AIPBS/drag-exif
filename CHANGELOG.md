@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - The CI assertion now checks the ZIP entry exactly instead of matching broad
   7-Zip output.
 - The CI assertion now opens the ZIP through the absolute workspace path.
+- The CI assertion now treats an empty ZIP entry match as false in PowerShell.
 
 ## 1.3.8+2 - 09-22-2026
 

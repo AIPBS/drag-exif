@@ -197,11 +197,12 @@ jobs:
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
           try {
-            $msixInZip = $zip.Entries | Where-Object FullName -eq 'dragexif.msix'
+            $zipEntries = @($zip.Entries | ForEach-Object { $_.FullName })
+            $msixInZip = $zipEntries -contains 'dragexif.msix'
           } finally {
             $zip.Dispose()
           }
-          if ($null -ne $msixInZip) {
+          if ($msixInZip) {
             throw 'The portable Windows ZIP must not contain dragexif.msix.'
           }
 
