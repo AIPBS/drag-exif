@@ -22,8 +22,8 @@
   > flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
   > flatpak --user install dragexif com.aipeac.dragexif
   > ```
-  > Notice: This is a custom, project-maintained Flatpak remote, not Flathub.
-  > Its packaging and signing workflow are open source in this repository.
+  > Notice: This is a project-maintained Flatpak remote held on github page, not Flathub.
+  > Its packaging and signing workflow are open sourced in this repository.
 
 ### MacOS
 - TODO
