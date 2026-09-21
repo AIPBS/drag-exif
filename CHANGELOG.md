@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.6 - 09-22-2026
+
+### Fixed
+- Flatpak publishing now runs as a job after the release job instead of using
+  a zero-job `workflow_run` workflow.
+
 ## 1.3.5 - 09-22-2026
 
 ### Added

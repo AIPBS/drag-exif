@@ -254,6 +254,132 @@ jobs:
           make_latest: true
           generate_release_notes: true
 
+  publish-flatpak:
+    needs: [release]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Flatpak toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder jq ostree
+          flatpak remote-add --user --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub \
+            org.gnome.Platform//51 org.gnome.Sdk//51
+
+      - name: Import repository signing key
+        env:
+          DRAGEXIF_FLATPAK_GPG_PRIVATE_KEY: ${{ secrets.DRAGEXIF_FLATPAK_GPG_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DRAGEXIF_FLATPAK_GPG_PRIVATE_KEY"
+          export GNUPGHOME="$RUNNER_TEMP/flatpak-gnupg"
+          mkdir -m 700 "$GNUPGHOME"
+          printf '%s\n' "$DRAGEXIF_FLATPAK_GPG_PRIVATE_KEY" \
+            | gpg --batch --import
+          key_id="$(gpg --batch --with-colons --list-secret-keys \
+            | awk -F: '$1 == "fpr" { print $10; exit }')"
+          test -n "$key_id"
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          echo "FLATPARK_GPG_KEY_ID=$key_id" >> "$GITHUB_ENV"
+
+      - name: Resolve current release asset
+        id: release
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^version: //p' pubspec.yaml)"
+          release="$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/v${version}")"
+          asset='dragexif-linux_standalone.tar.gz'
+          url="$(jq -r --arg asset "$asset" \
+            '.assets[] | select(.name == $asset) | .browser_download_url' \
+            <<<"$release")"
+          test -n "$url" && test "$url" != null
+          archive="$RUNNER_TEMP/$asset"
+          curl -fsSL --retry 3 --retry-all-errors -o "$archive" "$url"
+          sha256="$(sha256sum "$archive" | cut -d' ' -f1)"
+          size="$(stat -c%s "$archive")"
+          date="$(jq -r '.published_at' <<<"$release" | cut -c1-10)"
+          printf 'version=%s\nsha256=%s\nsize=%s\ndate=%s\n' \
+            "$version" "$sha256" "$size" "$date" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Flatpak manifest
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          SHA256: ${{ steps.release.outputs.sha256 }}
+          SIZE: ${{ steps.release.outputs.size }}
+          RELEASE_DATE: ${{ steps.release.outputs.date }}
+        run: |
+          set -euo pipefail
+          sed \
+            -e "s/@VERSION@/$VERSION/g" \
+            -e "s/@SHA256@/$SHA256/g" \
+            -e "s/@SIZE@/$SIZE/g" \
+            flatpak/com.aipeac.dragexif.yml.in \
+            > flatpak/com.aipeac.dragexif.yml
+          sed \
+            -e "s/@VERSION@/$VERSION/g" \
+            -e "s/@DATE@/$RELEASE_DATE/g" \
+            flatpak/com.aipeac.dragexif.metainfo.xml.in \
+            > flatpak/com.aipeac.dragexif.metainfo.xml
+
+      - name: Build and sign Flatpak repository
+        run: |
+          set -euo pipefail
+          repo="$RUNNER_TEMP/flatpak-repo"
+          build="$RUNNER_TEMP/flatpak-build"
+          flatpak-builder --force-clean \
+            --repo="$repo" \
+            --default-branch=stable \
+            --gpg-sign="$FLATPARK_GPG_KEY_ID" \
+            --gpg-homedir="$GNUPGHOME" \
+            --install-deps-from=flathub \
+            --user \
+            "$build" flatpak/com.aipeac.dragexif.yml
+          flatpak build-update-repo \
+            --gpg-sign="$FLATPARK_GPG_KEY_ID" \
+            --gpg-homedir="$GNUPGHOME" \
+            --generate-static-deltas \
+            "$repo"
+          echo "FLATPARK_REPO=$repo" >> "$GITHUB_ENV"
+
+      - name: Assemble GitHub Pages site
+        run: |
+          set -euo pipefail
+          pages="$RUNNER_TEMP/pages"
+          mkdir -p "$pages/repo"
+          cp -a "$FLATPARK_REPO/." "$pages/repo/"
+          gpg --batch --armor --export "$FLATPARK_GPG_KEY_ID" > "$pages/flatpark.gpg"
+          gpg_key="$(base64 -w0 "$pages/flatpark.gpg")"
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repository="${GITHUB_REPOSITORY#*/}"
+          cat > "$pages/flatpark.flatpakrepo" <<EOF
+[Flatpak Repo]
+Title=Drag Exif
+Url=https://${owner}.github.io/${repository}/repo
+Homepage=https://github.com/${GITHUB_REPOSITORY}
+Comment=Drag Exif Flatpak repository
+Description=Signed Flatpak releases of Drag Exif.
+GPGKey=${gpg_key}
+EOF
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   # Microsoft Store publishing is manual:
   # 1. Wait for CI to finish
   # 2. Download dragexif.msix from GitHub Releases
