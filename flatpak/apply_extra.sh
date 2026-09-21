@@ -10,6 +10,7 @@ cd "$extra_root"
 }
 
 rm -rf bundle
+tar --no-same-owner -xzf dragexif-linux_standalone.tar.gz
 [ -x bundle/'Drag Exif' ] || {
   echo 'Drag Exif binary not found in standalone bundle' >&2
   exit 1

@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.8+2 - 09-22-2026
+
+### Fixed
+- Fixed Flatpak installation unpacking for the standalone Linux archive.
+
 ## 1.3.8+1 - 09-22-2026
 
 ### Fixed
