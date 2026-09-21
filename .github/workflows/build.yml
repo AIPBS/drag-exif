@@ -285,6 +285,9 @@ jobs:
           test -n "$DRAGEXIF_FLATPAK_GPG_PRIVATE_KEY"
           export GNUPGHOME="$RUNNER_TEMP/flatpak-gnupg"
           mkdir -m 700 "$GNUPGHOME"
+          printf '%s\n' 'pinentry-mode loopback' > "$GNUPGHOME/gpg.conf"
+          printf '%s\n' 'allow-loopback-pinentry' > "$GNUPGHOME/gpg-agent.conf"
+          gpgconf --kill gpg-agent || true
           printf '%s\n' "$DRAGEXIF_FLATPAK_GPG_PRIVATE_KEY" \
             | gpg --batch --import
           key_id="$(gpg --batch --with-colons --list-secret-keys \

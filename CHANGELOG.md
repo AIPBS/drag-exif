@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.8+1 - 09-22-2026
+
+### Fixed
+- Flatpak repository signing now runs without an interactive pinentry prompt in
+  GitHub Actions.
+
 ## 1.3.8 - 09-22-2026
 
 ### Fixed
