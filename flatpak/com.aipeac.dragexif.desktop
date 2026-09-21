@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Drag Exif
+Comment=View and edit image metadata
+Exec=dragexif
+Icon=com.aipeac.dragexif
+Terminal=false
+Categories=Graphics;Utility;
+StartupNotify=true

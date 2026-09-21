@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.5 - 09-22-2026
+
+### Added
+- Added a signed GitHub Pages Flatpak repository for Drag Exif.
+
 ## 1.3.4 - 09-21-2026
 
 ### Changed

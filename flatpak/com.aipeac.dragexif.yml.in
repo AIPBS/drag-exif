@@ -1,0 +1,41 @@
+id: com.aipeac.dragexif
+runtime: org.gnome.Platform
+runtime-version: "51"
+sdk: org.gnome.Sdk
+command: dragexif
+separate-locales: false
+build-options:
+  no-debuginfo: true
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --filesystem=home
+modules:
+  - name: dragexif
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 apply_extra.sh /app/bin/apply_extra
+      - install -Dm755 dragexif-wrapper /app/bin/dragexif
+      - install -Dm644 com.aipeac.dragexif.desktop /app/share/applications/com.aipeac.dragexif.desktop
+      - install -Dm644 com.aipeac.dragexif.metainfo.xml /app/share/metainfo/com.aipeac.dragexif.metainfo.xml
+      - install -Dm644 com.aipeac.dragexif.svg /app/share/icons/hicolor/scalable/apps/com.aipeac.dragexif.svg
+    sources:
+      - type: extra-data
+        filename: dragexif-linux_standalone.tar.gz
+        only-arches:
+          - x86_64
+        url: https://github.com/AIPBS/drag-exif/releases/download/v@VERSION@/dragexif-linux_standalone.tar.gz
+        sha256: @SHA256@
+        size: @SIZE@
+      - type: file
+        path: apply_extra.sh
+      - type: file
+        path: dragexif-wrapper
+      - type: file
+        path: com.aipeac.dragexif.desktop
+      - type: file
+        path: com.aipeac.dragexif.metainfo.xml
+      - type: file
+        path: com.aipeac.dragexif.svg

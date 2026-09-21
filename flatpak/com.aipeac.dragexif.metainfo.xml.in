@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.aipeac.dragexif</id>
+  <metadata_license>CC-BY-4.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Drag Exif</name>
+  <summary>View and edit EXIF, IPTC, XMP and GPS metadata</summary>
+  <description>
+    <p>
+      Drag Exif is a desktop application for viewing and editing image metadata.
+      Open an image, inspect its EXIF, IPTC, XMP and GPS tags, edit values, and
+      save the changes back to the file.
+    </p>
+    <p>
+      The package includes ExifTool and processes selected files locally. Home
+      access is used for desktop drag-and-drop and saving edits to the selected
+      image files. The app does not require network access.
+    </p>
+    <ul>
+      <li>View EXIF, IPTC, XMP and GPS metadata</li>
+      <li>Drag and drop images into the application</li>
+      <li>Edit tags inline and add tags from a searchable catalog</li>
+      <li>Undo and redo changes</li>
+      <li>Export metadata to text, CSV or JSON</li>
+      <li>Use English or Chinese interface text</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.aipeac.dragexif.desktop</launchable>
+  <url type="homepage">https://github.com/AIPBS/drag-exif</url>
+  <url type="bugtracker">https://github.com/AIPBS/drag-exif/issues</url>
+  <url type="contribute">https://github.com/AIPBS/drag-exif</url>
+
+  <developer id="com.aipeac">
+    <name>AIPEAC</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+
+  <releases>
+    <release version="@VERSION@" date="@DATE@">
+      <description>
+        <p>Standalone Linux packaging with bundled ExifTool support.</p>
+      </description>
+    </release>
+  </releases>
+</component>
