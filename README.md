@@ -2,34 +2,33 @@
 
 **English | [中文](readmes/README_zh.md)**
 
-A standalone EXIF metadata viewer and __Editor__.
+- A standalone EXIF metadata viewer and __Editor__.
 
 ## About
 
-DragExif is a cross-platform Flutter desktop application for viewing and editing EXIF metadata from image files. It is based on the GPLv3 part of [ExifGlass](https://github.com/d2phap/ExifGlass) by Dương Diệu Pháp, originally written in C# with Avalonia UI. On top of the original project's viewing function, this app also added drag-to-edit support.
+- DragExif is a cross-platform Flutter desktop application for viewing and editing EXIF metadata from image files. It is based on the GPLv3 part of [ExifGlass](https://github.com/d2phap/ExifGlass) by Dương Diệu Pháp, originally written in C# with Avalonia UI. On top of the original project's viewing function, this app also added drag-to-edit support.
 
 ## Download and Installation
 [![Get it from Microsoft](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full)
 
 ### Windows
-You can install the app for from **[Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) for free**, or downloaded it directly from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
-
-### Flatpak
-
-```sh
-flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
-flatpak --user install dragexif com.aipeac.dragexif
-```
-
-> This is a custom, project-maintained Flatpak remote, not Flathub. Its
-> packaging and signing workflow are open source in this repository.
+- You can install the app for from **[Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) for free**, or downloaded it directly from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
 
 ### Linux
-You can install the app from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
-> TODO: package manager support
+- You can install the app from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
+- If you prefer to receive updates, you can use Flatpak.
+
+  > ```sh
+  > flatpak --user remote-add --if-not-exists dragexif https://aipbs.github.io/drag-exif/flatpark.flatpakrepo
+  > flatpak --user install dragexif com.aipeac.dragexif
+  > ```
+  > Notice: This is a custom, project-maintained Flatpak remote, not Flathub.
+  > Its packaging and signing workflow are open source in this repository.
+
+### 
 
 ### MacOS
-> TODO
+- TODO
 
 ## Features
 
@@ -46,8 +45,8 @@ You can install the app from the **[Release Page](https://github.com/AIPBS/drag-
 
 ## Language
 
-The application supports **English** and **Chinese (中文)**. Switch languages in **Settings → Language**, or let it follow your system default.
+- The application supports **English** and **Chinese (中文)**. Switch languages in **Settings → Language**, or let it follow your system default.
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 (GPLv3). See the [LICENSE](LICENSE) file for details.
+- This project is licensed under the GNU General Public License v3.0 (GPLv3). See the [LICENSE](LICENSE) file for details.
