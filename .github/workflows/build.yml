@@ -6,6 +6,8 @@ on:
     paths:
       - 'lib/**'
       - 'pubspec.yaml'
+      - 'linux/**'
+      - 'scripts/**'
       - 'windows/**'
       - '.github/workflows/build.yml'
   pull_request:
@@ -41,6 +43,26 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Cache ExifTool source archive
+        id: exiftool-source-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/Image-ExifTool-13.59.tar.gz
+          key: exiftool-source-13.59
+
+      - name: Download ExifTool source archive
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/Image-ExifTool-13.59.tar.gz"
+          url="https://github.com/exiftool/exiftool/archive/refs/tags/13.59.tar.gz"
+          expected='87d3317882fdae9cb4dcfe57a96a378d0132ffc02c731315bf128b19ddcf7aac'
+          if [ "${{ steps.exiftool-source-cache.outputs.cache-hit }}" != true ]; then
+            curl -fsSL --retry 3 --retry-all-errors -o "$archive" "$url"
+          fi
+          test -s "$archive"
+          actual="$(sha256sum "$archive" | cut -d' ' -f1)"
+          test "$actual" = "$expected"
+
       - name: Analyze
         run: flutter analyze
 
@@ -52,11 +74,27 @@ jobs:
           cd build/linux/x64/release
           tar czf "$(git rev-parse --show-toplevel)/dragexif-linux.tar.gz" bundle/
 
+      - name: Prepare standalone ExifTool bundle
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/Image-ExifTool-13.59.tar.gz"
+          ./scripts/package_linux_standalone.sh "$archive" \
+            "$(git rev-parse --show-toplevel)/dragexif-linux_standalone.tar.gz"
+
+      - name: Package standalone Linux build
+        run: test -s dragexif-linux_standalone.tar.gz
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dragexif-linux
           path: dragexif-linux.tar.gz
+
+      - name: Upload standalone Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dragexif-linux-standalone
+          path: dragexif-linux_standalone.tar.gz
 
   build-windows:
     runs-on: windows-latest
@@ -182,6 +220,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dragexif-linux
+          path: artifacts/
+
+      - name: Download standalone Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dragexif-linux-standalone
           path: artifacts/
 
       - name: Download Windows artifact

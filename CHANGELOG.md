@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.0 - 09-21-2026
+
+### Added
+- Added a standalone Linux release with a bundled ExifTool runtime for
+  FlatPark packaging.
+
+### Changed
+- The Linux app now prefers its bundled ExifTool before falling back to the
+  system command.
+- GitHub Releases publish both the normal Linux archive and the separate
+  `dragexif-linux_standalone.tar.gz` archive.
+
 ## 1.2.1 - 09-18-2026
 
 ### Changed

@@ -40,6 +40,11 @@ class ExifToolService {
     if (Platform.isWindows) {
       return '${Directory(Platform.resolvedExecutable).parent.path}\\exiftool.exe';
     }
+    if (Platform.isLinux) {
+      final bundled =
+          '${Directory(Platform.resolvedExecutable).parent.path}/exiftool/exiftool';
+      if (File(bundled).existsSync()) return bundled;
+    }
     return 'exiftool';
   }
 
@@ -63,6 +68,11 @@ class ExifToolService {
     // Default: check bundled exiftool.exe on Windows
     if (Platform.isWindows) {
       final bundled = '${Directory(Platform.resolvedExecutable).parent.path}\\exiftool.exe';
+      if (await File(bundled).exists()) return bundled;
+    }
+    if (Platform.isLinux) {
+      final bundled =
+          '${Directory(Platform.resolvedExecutable).parent.path}/exiftool/exiftool';
       if (await File(bundled).exists()) return bundled;
     }
 
