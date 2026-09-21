@@ -11,6 +11,10 @@ All notable changes to this project are documented in this file.
   7-Zip output.
 - The CI assertion now opens the ZIP through the absolute workspace path.
 - The CI assertion now treats an empty ZIP entry match as false in PowerShell.
+- The MSIX is temporarily moved out of the release directory while the
+  portable ZIP is created, then restored for its separate upload.
+- Removed the fragile post-ZIP PowerShell entry inspection; the source file is
+  physically absent while 7-Zip creates the archive.
 
 ## 1.3.8+2 - 09-22-2026
 
