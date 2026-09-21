@@ -15,7 +15,7 @@ DragExif is a cross-platform Flutter desktop application for viewing and editing
 You can install the app for from **[Microsoft Store](https://apps.microsoft.com/detail/9pntjm05st7q?launch=true&cid=github_readme&mode=full) for free**, or downloaded it directly from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
 
 ### Linux
-You can install the app from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**
+You can install the app from the **[Release Page](https://github.com/AIPBS/drag-exif/releases/)**.
 > TODO: package manager support
 
 ### MacOS

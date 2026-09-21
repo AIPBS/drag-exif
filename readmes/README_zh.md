@@ -4,6 +4,10 @@
 
 基于 ExifTool 的独立 EXIF 元数据查看器，使用 Flutter 构建。
 
+## 注意事项
+
+应用界面支持中文，但 XMP/EXIF 元数据本身的标签名称是英文，目前尚未汉化。
+
 ## 关于
 
 图像 EXIF 编辑器（DragExif）是一款跨平台桌面应用程序，用于查看和编辑图像文件的 EXIF 元数据。它基于 Dương Diệu Pháp 的 [ExifGlass](https://github.com/d2phap/ExifGlass)（原使用 C# 和 Avalonia UI 编写）。本项目是 Flutter/Dart 重写版，为 Linux，Windows 和 macOS 提供相同的功能。
@@ -37,10 +41,6 @@
 - 保存更改到文件（Ctrl+S）
 - 导出元数据为文本、CSV 或 JSON）
 - 图像预览面板
-
-## 注意事项
-
-应用界面支持中文，但 XMP/EXIF 元数据本身的标签名称是英文，目前尚未汉化。
 
 ## 语言
 
