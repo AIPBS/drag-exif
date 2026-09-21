@@ -100,6 +100,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   bool _isLoading = false;
   bool _dragging = false;
   double _leftPanelWidth = 260;
+  bool _windowReady = false;
+  Timer? _windowStateSaveTimer;
+  Future<void>? _windowStateSaveFuture;
+  bool _windowStateSavePending = false;
 
   // ── Perceived-performance: file-switching guard ──
   // When true the right panel shows a lightweight spinner instead of the
@@ -150,6 +154,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     await windowManager.setTitle(AppLocalizations.of(context)?.windowTitle ?? Constants.appName);
     await windowManager.setMinimumSize(const Size(700, 500));
     await windowManager.setPreventClose(true);
+    _windowReady = true;
   }
 
   @override
@@ -157,6 +162,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     if (Platform.isWindows) {
       HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     }
+    _windowStateSaveTimer?.cancel();
     windowManager.removeListener(this);
     _exifTool.dispose();
     super.dispose();
@@ -240,10 +246,10 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   }
 
   @override
-  void onWindowResize() => _saveWindowState();
+  void onWindowResize() => _scheduleWindowStateSave();
 
   @override
-  void onWindowMove() => _saveWindowState();
+  void onWindowMove() => _scheduleWindowStateSave();
 
   bool _isClosing = false;
 
@@ -253,6 +259,8 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     _isClosing = true;
     final canClose = await _handleUnsavedChangesBeforeAction();
     if (canClose) {
+      _windowStateSaveTimer?.cancel();
+      await _saveWindowState();
       await windowManager.setPreventClose(false);
       await windowManager.close();
     } else {
@@ -260,7 +268,38 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     }
   }
 
-  Future<void> _saveWindowState() async {
+  void _scheduleWindowStateSave() {
+    if (!_windowReady) return;
+    _windowStateSaveTimer?.cancel();
+    _windowStateSaveTimer = Timer(const Duration(milliseconds: 250), () {
+      _windowStateSaveTimer = null;
+      unawaited(_saveWindowState());
+    });
+  }
+
+  Future<void> _saveWindowState() {
+    if (!_windowReady) return Future<void>.value();
+
+    final existing = _windowStateSaveFuture;
+    if (existing != null) {
+      _windowStateSavePending = true;
+      return existing;
+    }
+
+    final future = _writeWindowState();
+    _windowStateSaveFuture = future;
+    future.whenComplete(() {
+      if (!identical(_windowStateSaveFuture, future)) return;
+      _windowStateSaveFuture = null;
+      if (_windowStateSavePending) {
+        _windowStateSavePending = false;
+        _scheduleWindowStateSave();
+      }
+    });
+    return future;
+  }
+
+  Future<void> _writeWindowState() async {
     final bounds = await windowManager.getBounds();
     final isMaximized = await windowManager.isMaximized();
     _settings.windowPositionX = bounds.left.toInt();
@@ -269,6 +308,11 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
     _settings.windowHeight = bounds.height.toInt();
     _settings.isMaximized = isMaximized;
     await _settings.save();
+
+    if (_windowStateSavePending) {
+      _windowStateSavePending = false;
+      await _writeWindowState();
+    }
   }
 
   // ──────────────────────────────────────────────────────────

@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.3.3 - 09-21-2026
+
+### Fixed
+- Window size and position now persist reliably across restarts.
+
 ## 1.3.2 - 09-21-2026
 
 ### Fixed
