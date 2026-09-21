@@ -192,9 +192,10 @@ jobs:
       - name: Package Windows build
         run: |
           cd build/windows/x64/runner/Release
-          7z a ../../../../../dragexif-windows.zip * -x!dragexif.msix
+          $zipPath = Join-Path $env:GITHUB_WORKSPACE 'dragexif-windows.zip'
+          7z a "$zipPath" * -x!dragexif.msix
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $zip = [System.IO.Compression.ZipFile]::OpenRead("../../../../../dragexif-windows.zip")
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
           try {
             $msixInZip = $zip.Entries | Where-Object FullName -eq 'dragexif.msix'
           } finally {
