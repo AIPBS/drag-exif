@@ -25,8 +25,6 @@
   > Notice: This is a custom, project-maintained Flatpak remote, not Flathub.
   > Its packaging and signing workflow are open source in this repository.
 
-### 
-
 ### MacOS
 - TODO
 
