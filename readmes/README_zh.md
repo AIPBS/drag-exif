@@ -31,9 +31,6 @@
   > 这是 DragExif 项目自行维护的 Flatpak 远程仓库，不是 Flathub。仓库中的
   > 打包文件和签名流程均为开源内容。
 
-### macOS
-- TODO
-
 ## 功能
 
 - 查看 EXIF，IPTC，XMP 和 GPS 元数据
