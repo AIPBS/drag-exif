@@ -25,9 +25,6 @@
   > Notice: This is a project-maintained Flatpak remote held on github page, not Flathub.
   > Its packaging and signing workflow are open sourced in this repository.
 
-### MacOS
-- TODO
-
 ## Features
 
 - View EXIF, IPTC, XMP, and GPS metadata
